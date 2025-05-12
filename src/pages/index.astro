@@ -1,11 +1,105 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Inicio">
+    <div class="space-y-8">
+        <div class="text-center space-y-4">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+                Bienvenido a tu Dashboard Personal
+            </h1>
+
+            <p class="text-primary-600 dark:text-primary-300 text-lg">
+                Gestiona tus cuentas, notas y tarjetas en un solo lugar
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a href="/accounts" class="group" data-astro-prefetch data-astro-transition="slide">
+            <div class="bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg p-6 border border-primary-200/50 dark:border-primary-700/50 transition-all duration-300 hover:scale-105">
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-primary-100/50 dark:bg-primary-700/50 rounded-full transition-transform duration-300 group-hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-primary-600 dark:text-primary-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                </svg>
+                </div>
+                <div class="transition-transform duration-300 group-hover:translate-x-2">
+                <h2 class="text-xl font-semibold text-primary-900 dark:text-primary-100">Cuentas</h2>
+                <p class="text-primary-600 dark:text-primary-300">Administra tus cuentas de usuario</p>
+                </div>
+            </div>
+            </div>
+        </a>
+
+        <a href="/notes" class="group" data-astro-prefetch data-astro-transition="slide">
+            <div class="bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg p-6 border border-primary-200/50 dark:border-primary-700/50 transition-all duration-300 hover:scale-105">
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-primary-100/50 dark:bg-primary-700/50 rounded-full transition-transform duration-300 group-hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-primary-600 dark:text-primary-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+                </div>
+                <div class="transition-transform duration-300 group-hover:translate-x-2">
+                <h2 class="text-xl font-semibold text-primary-900 dark:text-primary-100">Notas</h2>
+                <p class="text-primary-600 dark:text-primary-300">Organiza tus notas personales</p>
+                </div>
+            </div>
+            </div>
+        </a>
+
+        <a href="/cards" class="group" data-astro-prefetch data-astro-transition="slide">
+            <div class="bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg p-6 border border-primary-200/50 dark:border-primary-700/50 transition-all duration-300 hover:scale-105">
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-primary-100/50 dark:bg-primary-700/50 rounded-full transition-transform duration-300 group-hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-primary-600 dark:text-primary-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                </svg>
+                </div>
+                <div class="transition-transform duration-300 group-hover:translate-x-2">
+                <h2 class="text-xl font-semibold text-primary-900 dark:text-primary-100">Tarjetas</h2>
+                <p class="text-primary-600 dark:text-primary-300">Gestiona tus tarjetas bancarias</p>
+                </div>
+            </div>
+            </div>
+        </a>
+        </div>
+
+        <div class="mt-12 bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg p-8 border border-primary-200/50 dark:border-primary-700/50 animate-fade-in">
+        <div class="max-w-3xl mx-auto text-center space-y-6">
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+            Características Principales
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="space-y-3">
+                <div class="w-12 h-12 mx-auto bg-primary-100/50 dark:bg-primary-700/50 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-primary-600 dark:text-primary-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-primary-900 dark:text-primary-100">Seguro</h3>
+                <p class="text-primary-600 dark:text-primary-300">Tus datos están protegidos con los más altos estándares de seguridad</p>
+            </div>
+            <div class="space-y-3">
+                <div class="w-12 h-12 mx-auto bg-primary-100/50 dark:bg-primary-700/50 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-primary-600 dark:text-primary-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-primary-900 dark:text-primary-100">Rápido</h3>
+                <p class="text-primary-600 dark:text-primary-300">Interfaz optimizada para una experiencia fluida y sin demoras</p>
+            </div>
+            <div class="space-y-3">
+                <div class="w-12 h-12 mx-auto bg-primary-100/50 dark:bg-primary-700/50 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-primary-600 dark:text-primary-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-primary-900 dark:text-primary-100">Responsive</h3>
+                <p class="text-primary-600 dark:text-primary-300">Accede desde cualquier dispositivo con una experiencia optimizada</p>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
 </Layout>
