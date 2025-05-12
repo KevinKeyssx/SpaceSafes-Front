@@ -1,0 +1,80 @@
+---
+import LinksPage from "../../components/links/LinksPage.svelte"
+import DashboardLayout from "../../layouts/DashboardLayout.astro"
+
+
+// Datos de ejemplo para los links
+const links = [
+  {
+    id: 1,
+    title: "MDN Web Docs",
+    url: "https://developer.mozilla.org",
+    description: "La Documentación web de MDN proporciona información sobre tecnologías web abiertas incluyendo HTML, CSS y APIs para sitios web y aplicaciones web progresivas.",
+    image: "https://developer.mozilla.org/mdn-social-share.cd6c4a5a.png",
+    rating: 4.8,
+    category: "Documentación",
+    lastVisited: "Hace 2 días",
+    tags: ["HTML", "CSS", "JavaScript", "Web", "Referencia"]
+  },
+  {
+    id: 2,
+    title: "GitHub",
+    url: "https://github.com",
+    description: "GitHub es una plataforma de desarrollo colaborativo para alojar proyectos utilizando el sistema de control de versiones Git. Ofrece toda la funcionalidad de Git además de características propias.",
+    image: "https://github.githubassets.com/images/modules/site/social-cards/github-social.png",
+    rating: 4.9,
+    category: "Desarrollo",
+    lastVisited: "Ayer",
+    tags: ["Git", "Código", "Repositorio", "Colaboración"]
+  },
+  {
+    id: 3,
+    title: "Stack Overflow",
+    url: "https://stackoverflow.com",
+    description: "Stack Overflow es un sitio web de preguntas y respuestas para programadores profesionales y entusiastas. Es el sitio insignia de la red Stack Exchange.",
+    image: "https://cdn.sstatic.net/Sites/stackoverflow/Img/apple-touch-icon@2.png?v=73d79a89bded",
+    rating: 4.7,
+    category: "Comunidad",
+    lastVisited: "Hace 1 semana",
+    tags: ["Preguntas", "Respuestas", "Programación", "Soluciones"]
+  },
+  {
+    id: 4,
+    title: "Tailwind CSS",
+    url: "https://tailwindcss.com",
+    description: "Tailwind CSS es un framework de CSS de utilidad primero para crear rápidamente interfaces de usuario personalizadas. A diferencia de otros frameworks, no viene con clases predefinidas.",
+    image: "https://tailwindcss.com/_next/static/media/social-card-large.a6e71726.jpg",
+    rating: 4.5,
+    category: "CSS",
+    lastVisited: "Hace 3 días",
+    tags: ["CSS", "Framework", "Diseño", "Frontend"]
+  },
+  {
+    id: 5,
+    title: "React",
+    url: "https://reactjs.org",
+    description: "React es una biblioteca JavaScript de código abierto diseñada para crear interfaces de usuario con el objetivo de facilitar el desarrollo de aplicaciones en una sola página.",
+    image: "https://reactjs.org/logo-og.png",
+    rating: 4.6,
+    category: "JavaScript",
+    lastVisited: "Hace 5 días",
+    tags: ["JavaScript", "Frontend", "UI", "Biblioteca"]
+  },
+  {
+    id: 6,
+    title: "Astro",
+    url: "https://astro.build",
+    description: "Astro es un framework web todo en uno para crear sitios web rápidos y centrados en el contenido. Permite usar componentes de cualquier framework y renderizar a HTML estático para un rendimiento excepcional.",
+    image: "https://astro.build/og/astro.jpg",
+    rating: 4.4,
+    category: "Framework",
+    lastVisited: "Hoy",
+    tags: ["Web", "SSG", "Rendimiento", "Frontend"]
+  }
+]
+
+---
+
+<DashboardLayout title="Links">
+  <LinksPage client:load links={links} />
+</DashboardLayout>
