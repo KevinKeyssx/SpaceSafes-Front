@@ -1,0 +1,215 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import PaymentsBoard from "../../components/payments/PaymentsBoard.svelte";
+
+
+// Datos de ejemplo para los pagos
+const payments = [
+  {
+    id: 1,
+    description: "Suscripción Netflix",
+    recipient: "Netflix",
+    amount: 15.99,
+    dueDate: "2025-05-15",
+    status: "pending",
+    paymentMethod: {
+      type: "card",
+      brand: "Visa",
+      last4: "4532"
+    },
+    website: {
+      name: "Netflix",
+      url: "https://netflix.com"
+    }
+  },
+  {
+    id: 2,
+    description: "Hosting Web",
+    recipient: "Netlify",
+    amount: 19.00,
+    dueDate: "2025-05-20",
+    status: "pending",
+    paymentMethod: {
+      type: "card",
+      brand: "Mastercard",
+      last4: "7890"
+    },
+    website: {
+      name: "Netlify",
+      url: "https://netlify.com"
+    }
+  },
+  {
+    id: 3,
+    description: "Spotify Premium",
+    recipient: "Spotify",
+    amount: 9.99,
+    dueDate: "2025-05-12",
+    status: "paid",
+    paymentMethod: {
+      type: "card",
+      brand: "Visa",
+      last4: "4532"
+    },
+    website: {
+      name: "Spotify",
+      url: "https://spotify.com"
+    }
+  },
+  {
+    id: 4,
+    description: "Adobe Creative Cloud",
+    recipient: "Adobe",
+    amount: 52.99,
+    dueDate: "2025-05-25",
+    status: "pending",
+    paymentMethod: {
+      type: "card",
+      brand: "Amex",
+      last4: "1234"
+    },
+    website: {
+      name: "Adobe",
+      url: "https://adobe.com"
+    }
+  },
+  {
+    id: 5,
+    description: "Dominio anual",
+    recipient: "GoDaddy",
+    amount: 14.99,
+    dueDate: "2025-06-05",
+    status: "pending",
+    paymentMethod: {
+      type: "card",
+      brand: "Mastercard",
+      last4: "7890"
+    },
+    website: {
+      name: "GoDaddy",
+      url: "https://godaddy.com"
+    }
+  },
+  {
+    id: 6,
+    description: "Microsoft 365",
+    recipient: "Microsoft",
+    amount: 6.99,
+    dueDate: "2025-05-18",
+    status: "paid",
+    paymentMethod: {
+      type: "card",
+      brand: "Visa",
+      last4: "5678"
+    },
+    website: {
+      name: "Microsoft",
+      url: "https://microsoft.com"
+    }
+  },
+  {
+    id: 7,
+    description: "AWS Cloud Services",
+    recipient: "Amazon Web Services",
+    amount: 35.40,
+    dueDate: "2025-05-10",
+    status: "pending",
+    paymentMethod: {
+      type: "card",
+      brand: "Visa",
+      last4: "5678"
+    },
+    website: {
+      name: "AWS",
+      url: "https://aws.amazon.com"
+    }
+  },
+  {
+    id: 8,
+    description: "YouTube Premium",
+    recipient: "Google",
+    amount: 11.99,
+    dueDate: "2025-05-22",
+    status: "declined",
+    paymentMethod: {
+      type: "card",
+      brand: "Mastercard",
+      last4: "9012"
+    },
+    website: {
+      name: "YouTube",
+      url: "https://youtube.com"
+    }
+  },
+  {
+    id: 9,
+    description: "iCloud Storage",
+    recipient: "Apple",
+    amount: 2.99,
+    dueDate: "2025-05-17",
+    status: "paid",
+    paymentMethod: {
+      type: "card",
+      brand: "Visa",
+      last4: "4532"
+    },
+    website: {
+      name: "Apple",
+      url: "https://apple.com"
+    }
+  },
+  {
+    id: 10,
+    description: "GitHub Pro",
+    recipient: "GitHub",
+    amount: 7.00,
+    dueDate: "2025-05-28",
+    status: "pending",
+    paymentMethod: {
+      type: "card",
+      brand: "Mastercard",
+      last4: "7890"
+    },
+    website: {
+      name: "GitHub",
+      url: "https://github.com"
+    }
+  }
+];
+
+// Datos de ejemplo para los balances
+const balances = [
+  {
+    id: 1,
+    name: "Cuenta Principal",
+    category: "bank",
+    amount: 2500.75,
+    iban: "ES91 2100 0418 4502 0005 1332",
+    entity: "BBVA",
+    lastUpdate: new Date().toISOString(),
+    description: "Cuenta para gastos diarios y recibir nómina"
+  },
+  {
+    id: 2,
+    name: "Efectivo",
+    category: "cash",
+    amount: 350.00,
+    lastUpdate: new Date().toISOString(),
+    description: "Dinero en efectivo para gastos pequeños"
+  },
+  {
+    id: 3,
+    name: "Tarjeta de Crédito",
+    category: "card",
+    amount: 1200.50,
+    brand: "Visa",
+    last4: "4321",
+    lastUpdate: new Date().toISOString(),
+    description: "Tarjeta para compras online y viajes"
+  }
+];
+---
+
+<DashboardLayout title="Pagos">
+  <PaymentsBoard client:load initialPayments={payments} initialBalances={balances} />
+</DashboardLayout>
