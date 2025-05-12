@@ -1,0 +1,56 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import NotesPage from '../../components/notes/NotesPage.svelte';
+
+const notes = [
+  {
+    id: 1,
+    title: "Reunión de proyecto",
+    content: "Discutir los nuevos requerimientos del cliente y establecer plazos de entrega. Puntos importantes: diseño de interfaz, integración de API, testing.",
+    category: "Trabajo",
+    createdAt: "2024-01-15T10:30:00",
+    priority: "high",
+    color: "#FF6B6B"
+  },
+  {
+    id: 2,
+    title: "Lista de compras",
+    content: "Leche, pan, huevos, frutas, verduras, papel higiénico, detergente.",
+    category: "Personal",
+    createdAt: "2024-01-14T15:45:00",
+    priority: "low",
+    color: "#4ECDC4"
+  },
+  {
+    id: 3,
+    title: "Ideas para vacaciones",
+    content: "1. Playa en Cancún\n2. Tour por Europa\n3. Camping en las montañas\nInvestigar precios y fechas disponibles.",
+    category: "Personal",
+    createdAt: "2024-01-13T09:20:00",
+    priority: "medium",
+    color: "#FFD93D"
+  },
+  {
+    id: 4,
+    title: "Tareas pendientes",
+    content: "- Llamar al dentista\n- Pagar facturas\n- Enviar correo al equipo\n- Actualizar documentación",
+    category: "Importante",
+    createdAt: "2024-01-12T16:15:00",
+    priority: "high",
+    color: "#95A5A6"
+  },
+  {
+    id: 5,
+    title: "Receta favorita",
+    content: "Ingredientes:\n- 2 tazas de harina\n- 1 taza de azúcar\n- 3 huevos\n- 1 taza de leche\nInstrucciones: Mezclar todos los ingredientes...",
+    category: "Recetas",
+    createdAt: "2024-01-11T11:50:00",
+    priority: "low",
+    color: "#6C5CE7"
+  }
+];
+---
+
+<DashboardLayout title="Notas">
+  <NotesPage client:load notes={notes} />
+</DashboardLayout>
