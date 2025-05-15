@@ -1,61 +1,8 @@
 ---
 import AccountsPage from '../../components/accounts/AccountsPage.svelte';
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-
-const accounts = [
-    {
-        id: 1,
-        username: "john_doe",
-        email: "john@example.com",
-        fullName: "John Doe",
-        role: "Administrator",
-        lastLogin: "2024-01-15T10:30:00",
-        status: "active",
-        avatar: "https://ui-avatars.com/api/?name=John+Doe&background=0D8ABC&color=fff"
-    },
-    {
-        id: 2,
-        username: "jane_smith",
-        email: "jane@example.com",
-        fullName: "Jane Smith",
-        role: "Editor",
-        lastLogin: "2024-01-14T15:45:00",
-        status: "active",
-        avatar: "https://ui-avatars.com/api/?name=Jane+Smith&background=2F855A&color=fff"
-    },
-    {
-        id: 3,
-        username: "mike_wilson",
-        email: "mike@example.com",
-        fullName: "Mike Wilson",
-        role: "User",
-        lastLogin: "2024-01-13T09:20:00",
-        status: "inactive",
-        avatar: "https://ui-avatars.com/api/?name=Mike+Wilson&background=9F580A&color=fff"
-    },
-    {
-        id: 4,
-        username: "sarah_johnson",
-        email: "sarah@example.com",
-        fullName: "Sarah Johnson",
-        role: "Editor",
-        lastLogin: "2024-01-12T16:15:00",
-        status: "active",
-        avatar: "https://ui-avatars.com/api/?name=Sarah+Johnson&background=1E429F&color=fff"
-    },
-    {
-        id: 5,
-        username: "alex_brown",
-        email: "alex@example.com",
-        fullName: "Alex Brown",
-        role: "User",
-        lastLogin: "2024-01-11T11:50:00",
-        status: "active",
-        avatar: "https://ui-avatars.com/api/?name=Alex+Brown&background=7E1F86&color=fff"
-    }
-];
 ---
 
 <DashboardLayout title="Cuentas">
-    <AccountsPage client:load accounts={accounts} />
+    <AccountsPage client:only="svelte" />
 </DashboardLayout>
