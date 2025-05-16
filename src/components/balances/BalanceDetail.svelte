@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Balance } from '@/models/balance/balance.mode';
+    import type { Balance } from '@/models/balance/balance.model';
     import { TypeBalance } from '@/models/balance/enum/type-balance.enum';
     import { TypeCard } from '@/models/balance/enum/type-card.enum';
     import { fade } from 'svelte/transition';
