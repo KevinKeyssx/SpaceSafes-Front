@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Balance } from "@/models/balance/balance.mode";
+    import type { Balance } from "@/models/balance/balance.model";
     import { TypeBalance } from "@/models/balance/enum/type-balance.enum";
     import PatternBackground from "@/components/ui/PatternBackground.svelte";
     import GlowEffects from "@/components/ui/GlowEffects.svelte";
@@ -83,15 +83,6 @@
     }).format(amount);
   }
 
-//   function handleClick() {
-//     onSelect(balance);
-//   }
-
-//   function handleKeyDown(e: KeyboardEvent) {
-//     if (e.key === 'Enter' || e.key === ' ') {
-//       onSelect(balance);
-//     }
-//   }
 </script>
 
 <div
