@@ -1,7 +1,7 @@
 <script lang="ts">
     import BalanceCard from "./BalanceCard.svelte";
     import BalanceDetail from "./BalanceDetail.svelte";
-    import type { Balance } from "@/models/balance/balance.mode";
+    import type { Balance } from "@/models/balance/balance.model";
     import { fade } from 'svelte/transition';
     
     export let balances: Balance[] = [];
