@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Account } from "@/models/account/account.model";
     import { fade } from 'svelte/transition';
+    import PatternBackground from "../ui/PatternBackground.svelte";
 
     export let account: Account;
     export let selectedAccountId: number | null = null;
@@ -38,18 +39,8 @@
         <div class="absolute -top-10 -left-10 w-40 h-40 bg-primary-600/20 rounded-full blur-2xl"></div>
         <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-primary-500/20 rounded-full blur-2xl"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary-400/5 rounded-full blur-xl opacity-70"></div>
-        
-        <!-- Patrón decorativo sutil -->
-        <div class="absolute inset-0 opacity-5">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5" />
-                    </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#smallGrid)" />
-            </svg>
-        </div>
+
+        <PatternBackground />
         
         <!-- Indicador de favorito con animación -->        
         {#if account.isFavorite}
