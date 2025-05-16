@@ -45,7 +45,7 @@
 
 <div
     role="article"
-    class="relative w-full h-full flex flex-col bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 backdrop-blur-xl rounded-xl shadow-lg border border-primary-600/30 dark:border-primary-700/50 transition-all duration-300 overflow-hidden group hover:shadow-xl hover:shadow-primary-500/20"
+    class="animate-slide-up relative w-full h-full flex flex-col bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 backdrop-blur-xl rounded-xl shadow-lg border border-primary-600/30 dark:border-primary-700/50 transition-all duration-300 overflow-hidden group hover:shadow-xl hover:shadow-primary-500/20"
     aria-label="Enlace a {link.name || 'sitio web'}"
     transition:fade={{ duration: 300 }}
 >
