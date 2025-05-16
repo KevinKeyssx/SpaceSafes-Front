@@ -4,7 +4,7 @@ export const GET: APIRoute = async (context: APIContext) => {
     const userId = context.locals.userId;
     const token  = context.locals.authToken;
 
-    const response = await fetch(`http://localhost:3017/api/v1/accounts/users/${userId}`, {
+    const response = await fetch(`http://localhost:3017/api/v1/accounts/user/${userId}`, {
         headers: {
             'Authorization': `Bearer ${token}`,
         },
