@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import type { Balance } from '@/models/balance/balance.mode';
+    import type { Balance } from '@/models/balance/balance.model';
     import {
         balanceStore,
         setBalances,
