@@ -1,66 +1,8 @@
 ---
 import BalancesPage from '../../components/balances/BalancesPage.svelte';
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-
-// Datos de ejemplo para balances
-const mockBalances = [
-  {
-    id: 1,
-    name: 'Cuenta Principal',
-    category: 'bank',
-    amount: 2500.75,
-    iban: 'ES91 2100 0418 4502 0005 1332',
-    entity: 'BBVA',
-    lastUpdate: new Date().toISOString(),
-    description: 'Cuenta para gastos diarios y recibir nómina'
-  },
-  {
-    id: 2,
-    name: 'Efectivo',
-    category: 'cash',
-    amount: 350.00,
-    lastUpdate: new Date().toISOString(),
-    description: 'Dinero en efectivo para gastos pequeños'
-  },
-  {
-    id: 3,
-    name: 'Tarjeta de Crédito',
-    category: 'card',
-    amount: 1200.50,
-    brand: 'Visa',
-    last4: '4321',
-    lastUpdate: new Date().toISOString(),
-    description: 'Tarjeta para compras online y viajes'
-  },
-  {
-    id: 4,
-    name: 'Ahorros Vacaciones',
-    category: 'savings',
-    amount: 3500.00,
-    lastUpdate: new Date().toISOString(),
-    description: 'Fondo para las vacaciones de verano'
-  },
-  {
-    id: 5,
-    name: 'Inversión Bolsa',
-    category: 'investment',
-    amount: 5000.00,
-    lastUpdate: new Date().toISOString(),
-    description: 'Cartera de acciones diversificada'
-  },
-  {
-    id: 6,
-    name: 'Proyecto Freelance',
-    category: 'freelance',
-    amount: 1800.00,
-    lastUpdate: new Date().toISOString(),
-    description: 'Ingresos pendientes por proyecto de diseño web'
-  }
-];
 ---
 
 <DashboardLayout title="Balances | Sistema de Gestión de Pagos">
-  <div class="container mx-auto px-4 py-8">
-    <BalancesPage client:load initialBalances={mockBalances} />
-  </div>
+    <BalancesPage client:only="svelte" />
 </DashboardLayout>
