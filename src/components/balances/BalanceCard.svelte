@@ -94,7 +94,7 @@
   <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0">
     <!-- Elementos decorativos de fondo que se escalan con el contenedor -->
     <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
-    <PatternBackground patternId="balanceGrid-{balance.id}" opacity={5} />
+    <PatternBackground patternId="balanceGrid-{balance.id}" />
   </div>
   
   <!-- Efectos de brillo que permanecen fijos -->
