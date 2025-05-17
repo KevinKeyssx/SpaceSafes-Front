@@ -10,9 +10,9 @@ const menuItems = [
 const currentPath = Astro.url.pathname;
 ---
 
-<aside class="w-64 bg-primary-50/80 dark:bg-primary-800/80 backdrop-blur-lg shadow-xl animate-fade-in">
-    <div class="h-full flex flex-col">
-        <div class="h-16 flex items-center justify-center">
+<aside class="fixed top-0 left-0 h-screen w-64 bg-primary-50/80 dark:bg-primary-800/80 backdrop-blur-lg shadow-xl animate-fade-in z-10 overflow-y-auto">
+    <div class="flex flex-col">
+        <div class="h-16 flex items-center justify-center sticky top-0 bg-primary-50/95 dark:bg-primary-800/95 backdrop-blur-lg z-20">
             <h2 class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
                 Menú
             </h2>
