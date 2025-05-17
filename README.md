@@ -1,48 +1,101 @@
-# Astro Starter Kit: Basics
+# SpaceSafes: Tu Espacio Seguro Digital
 
-```sh
-npm create astro@latest -- --template basics
+![SpaceSafes Logo](public/favicon.svg)
+
+## Acerca del Proyecto
+
+SpaceSafes es una plataforma de gestión de información personal segura desarrollada para la Hackathon de Clerk 2025. La aplicación proporciona un espacio centralizado y seguro donde los usuarios pueden almacenar y gestionar sus cuentas, enlaces, balances financieros, notas y más, todo protegido con la autenticación avanzada de Clerk.
+
+### ¿Por qué SpaceSafes?
+
+En un mundo digital donde manejamos decenas de cuentas, contraseñas y datos personales, SpaceSafes ofrece:
+
+- **Acceso unificado**: Un solo lugar para todas tus cuentas y datos importantes
+- **Experiencia fluida**: Interfaz moderna e intuitiva que funciona en cualquier dispositivo
+- **Privacidad por diseño**: Tu información nunca se comparte con terceros
+
+## Tecnologías Utilizadas
+
+### Frontend
+- **Astro**: Framework web de alto rendimiento con renderizado híbrido
+- **Svelte**: Para componentes interactivos con reactividad eficiente
+- **TailwindCSS**: Framework CSS para un diseño moderno y responsive
+- **TypeScript**: Tipado estático para un código más robusto
+
+### Autenticación y Seguridad
+- **Clerk**: Sistema de autenticación completo y seguro
+- **JWT**: Para manejo seguro de sesiones
+
+### Estado y Caché
+- **Svelte Stores**: Para estado global de la aplicación
+
+### Herramientas de Desarrollo
+- **pnpm**: Gestor de paquetes eficiente y rápido
+- **Vite**: Para desarrollo rápido con HMR (Hot Module Replacement)
+
+## Integración con Clerk
+
+SpaceSafes aprovecha al máximo las capacidades de Clerk para ofrecer una experiencia de autenticación segura y sin fricciones:
+
+### Características implementadas con Clerk
+
+- **Autenticación Multi-Factor (MFA)**: Capa adicional de seguridad para proteger las cuentas de los usuarios
+- **Social Login**: Inicio de sesión simplificado con proveedores como Google, GitHub, etc.
+- **Componentes Personalizados**: UI de autenticación integrada perfectamente con el diseño de la aplicación
+- **Protección de Rutas**: Acceso controlado a páginas y recursos basado en el estado de autenticación
+
+### Implementación Técnica
+
+La integración de Clerk en SpaceSafes se realiza mediante:
+
+```typescript
+// Componentes de Clerk en el Header
+import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro';
+
+// En el Header.astro
+<SignedOut>
+  <SignInButton mode='modal' appearance={{
+    elements: {
+      footer: 'hidden'
+    }
+  }}/>
+</SignedOut>
+
+<SignedIn>
+  <UserButton showName appearance={{
+    elements: {
+      footer: 'hidden',
+      userButton: 'text-primary-900 dark:text-primary-100'
+    }
+  }}/>
+</SignedIn>
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+- **Middleware de Astro**: Para protección de rutas y validación de sesiones
+- **Context Providers**: Para acceso a datos de usuario en toda la aplicación
+- **API Endpoints Protegidos**: Validación de tokens JWT en cada solicitud
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Funcionalidades Principales
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+- **Enlaces Organizados**: Guarda y categoriza tus enlaces importantes
+- **Balances Financieros**: Seguimiento de ingresos y gastos
+- **Tarjetas Bancarias**: Gestión segura de información de tarjetas
 
-## 🚀 Project Structure
+## Comandos
 
-Inside of your Astro project, you'll see the following folders and files:
+Todos los comandos se ejecutan desde la raíz del proyecto, desde una terminal:
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
+| Comando                   | Acción                                           |
 | :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+| `pnpm install`            | Instala dependencias                             |
+| `pnpm run dev`            | Inicia servidor de desarrollo en `localhost:4321`|
+| `pnpm run build`          | Construye el sitio para producción en `./dist/`  |
+| `pnpm run preview`        | Vista previa de la build antes de desplegar      |
 
-## 👀 Want to learn more?
+## Equipo
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+SpaceSafes está siendo desarrollado solo por mi @KevinKeyssx, manejando tanto el frontend como el backend.
+
+## Licencia
+
+Este proyecto está licenciado bajo [MIT License](LICENSE).
