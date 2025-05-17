@@ -10,6 +10,7 @@ export type Balance = {
 
 
 export type NavlyBalance = {
+    id              : string;
     principal       : boolean;
     expirationDate  : string | null;
     createdAt       : string;
@@ -39,3 +40,15 @@ export type Link = {
     navlyBalances   : NavlyBalance[];
     account         : Account | null;
 };
+
+
+export type LinkSave = {
+    id              : string;
+    name            : string;
+    avatar          : string;
+    description     : string;
+    url             : string;
+    category        : WebsiteCategory;
+    isFavorite      : boolean;
+    balanceIds      : string[];
+}
