@@ -53,11 +53,12 @@
     <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0">
         <!-- Elementos decorativos de fondo que se escalan con el contenedor -->
         <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
-        <PatternBackground patternId="linkGrid-{link.id}" opacity={5} />
+        <PatternBackground patternId="linkGrid-{link.id}" />
     </div>
-    
+
     <!-- Efectos de brillo que permanecen fijos -->
     <GlowEffects />
+
     <header class="relative z-10">
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10 transition-all duration-300 group-hover:from-black/90"></div>
 
@@ -94,8 +95,8 @@
             </div>
         {/if}
 
-         <!-- Indicador de acción con mejor estilo y animación -->
-         <div class="absolute -right-1 top-1/2 -translate-y-1/2 z-10">
+        <!-- Indicador de acción con mejor estilo y animación -->
+        <div class="absolute -right-1 top-1/2 -translate-y-1/2 z-10">
             <div class="p-2 rounded-l-full bg-primary-500/50 backdrop-blur-md shadow-lg transition-all duration-300 group-hover:bg-primary-400/60 group-hover:translate-x-[-4px] group-hover:shadow-primary-400/30">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -107,31 +108,24 @@
     <main class="p-4 flex-1 flex flex-col z-10 relative">
         <!-- Línea divisoria con degradado en la parte superior -->
         <div class="h-px w-full bg-gradient-to-r from-transparent via-primary-400/30 to-transparent mb-3"></div>
-        
-       
-        <!-- <div class="mt-auto"> -->
-            <a 
-                href={link.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                class="flex items-center space-x-2 text-primary-300 hover:text-white text-sm mb-3 truncate transition-all duration-300 group-hover:translate-x-1"
-                on:click|stopPropagation
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 flex-shrink-0 text-primary-400">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                </svg>
 
-                <span class="truncate">{link.url}</span>
-            </a>
-        <!-- </div> -->
+        <a 
+            href={link.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="flex items-center space-x-2 text-primary-300 hover:text-white text-sm mb-3 truncate transition-all duration-300 group-hover:translate-x-1"
+            on:click|stopPropagation
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 flex-shrink-0 text-primary-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
 
+            <span class="truncate">{link.url}</span>
+        </a>
 
         <p class="text-primary-200 text-sm mb-3 line-clamp-2 transition-all duration-300 group-hover:translate-x-1">
             {link.description || 'Sin descripción'}
         </p>
-
-
-
 
         {#if link.navlyBalances && link.navlyBalances.length > 0}
             <div class="flex flex-wrap gap-2 mb-3">
@@ -148,8 +142,6 @@
                 {/each}
             </div>
         {/if}
-
-       
     </main>
 
     <footer class="mt-auto px-4 py-3 bg-primary-600/30 backdrop-blur-sm flex justify-between items-center border-t border-primary-500/30 z-10 relative">
@@ -171,8 +163,6 @@
 
             <span class="text-xs">{link.category}</span>
         </div>
-        
-        
     </footer>
 </div>
 
