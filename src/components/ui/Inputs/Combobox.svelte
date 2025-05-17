@@ -1,36 +1,25 @@
 <script lang="ts">
     import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
+    import { onMount } from 'svelte';
 
     type Option = {
         value: string;
         label: string;
     };
 
-    type Props = {
-        id?: string;
-        name?: string;
-        value?: string;
-        label?: string;
-        placeholder?: string;
-        options?: Option[];
-        required?: boolean;
-        disabled?: boolean;
-    }
-
-    let {
-        id = "",
-        name = "",
-        value = $bindable<string>(""),
-        label = "",
-        placeholder = "Select an option",
-        options = [],
-        required = false,
-        disabled = false,
-    }: Props = $props();
+    export let id = "";
+    export let name = "";
+    export let value = "";
+    export let label = "";
+    export let placeholder = "Select an option";
+    export let options: Option[] = [];
+    export let required = false;
+    export let disabled = false;
 
     // Initialize inputValue with empty string
-    let inputValue = $state("");
-    let showDropdown = $state(false);
+    let inputValue = "";
+    let showDropdown = false;
+    let filteredOptions: Option[] = [];
     
     // Set initial inputValue based on the provided value
     function initializeInputValue() {
@@ -40,21 +29,20 @@
                 inputValue = option.label;
             }
         }
+        updateFilteredOptions();
     }
     
-    // Initialize when component is mounted
-    initializeInputValue();
+    function updateFilteredOptions() {
+        filteredOptions = options.filter(option => 
+            option.label.toLowerCase().includes(inputValue.toLowerCase())
+        );
+    }
     
     function selectOption(option: Option) {
         value = option.value;
         inputValue = option.label;
         showDropdown = false;
     }
-    
-    // Update inputValue whenever value or options change
-    $effect(() => {
-        initializeInputValue();
-    });
 
     function handleInputFocus() {
         showDropdown = true;
@@ -66,12 +54,20 @@
             showDropdown = false;
         }, 200);
     }
-
-    const filteredOptions = $derived(
-        options.filter(option => 
-            option.label.toLowerCase().includes(inputValue.toLowerCase())
-        )
-    );
+    
+    function handleInputChange() {
+        updateFilteredOptions();
+    }
+    
+    // Initialize when component is mounted
+    onMount(() => {
+        initializeInputValue();
+    });
+    
+    // Watch for changes to value or options
+    $: if (value || options) {
+        initializeInputValue();
+    }
 </script>
 
 <div class="flex flex-col gap-2 w-full">
@@ -90,8 +86,9 @@
                 {disabled}
                 bind:value={inputValue}
                 placeholder={placeholder}
-                onfocus={handleInputFocus}
-                onblur={handleInputBlur}
+                on:focus={handleInputFocus}
+                on:blur={handleInputBlur}
+                on:input={handleInputChange}
                 class="bg-transparent border-none focus:ring-0 focus:border-none outline-none text-primary-300 w-full placeholder-primary-400/50"
             />
         </div>
@@ -103,7 +100,7 @@
                         <button
                             type="button"
                             class="w-full text-left px-4 py-2 hover:bg-primary-500/20 text-primary-300 {value === option.value ? 'bg-primary-500/30 text-primary-200' : ''}"
-                            onclick={() => selectOption(option)}
+                            on:click={() => selectOption(option)}
                         >
                             {option.label}
                         </button>
