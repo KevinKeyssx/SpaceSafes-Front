@@ -3,7 +3,7 @@
 
     import LinkList from './LinkList.svelte';
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
-    import type { Link } from '@/models/links/link.model';
+    import type {  Link, LinkSave } from '@/models/links/link.model';
     import {
         linksStore,
         setLinks,
@@ -11,6 +11,8 @@
         errorLinksStore,
         setIsLoadingLinksStore
     } from '@/stores/linksStore';
+    import Dialog from '../ui/bits/Dialog.svelte';
+    import LinkForm from './LinkForm.svelte';
 
 
     onMount(async() => {
@@ -19,7 +21,7 @@
         }
 
         setIsLoadingLinksStore(true);
-        const linkList = await loadSpaceSafes<Link[]>( [], '/api/space-safes/navly' );
+        const linkList = await loadSpaceSafes<Link[]>({ url: '/api/space-safes/navly' });
 
         if (  linkList === null ) {
             console.log('🚀 ~ file: LinksPage.svelte:15 ~ linkList:')
@@ -30,22 +32,27 @@
         setIsLoadingLinksStore(false);
         setLinks( linkList );
     });
+    let open = false
 </script>
 
-<div class="space-y-6">
-    <div class="flex justify-between items-center">
+<div>
+    <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-primary-900 dark:text-primary-100">Mis Enlaces Web</h1>
 
-        <button 
-            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-300 flex items-center space-x-2"
-            aria-label="Añadir nuevo enlace"
+        <Dialog
+            buttonText="Añadir Enlace"
+            bind:open={open}
         >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
+            {#snippet iconButton()}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path><path d="M12 5v14"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.4s" values="16;0"/></path></g></svg>
+            {/snippet}
 
-            <span>Añadir Enlace</span>
-        </button>
+            {#snippet title()}
+                Añadir Enlace
+            {/snippet}
+
+            <LinkForm link={{} as LinkSave} bind:open={open}/>
+        </Dialog>       
     </div>
 
     {#if $isLoadingLinksStore}
@@ -55,20 +62,9 @@
         </div>
     {:else if $errorLinksStore}
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-            <!-- <p>Error al cargar las cuentas. {$errorAccounts.message || 'Intente nuevamente más tarde.'}</p> -->
-            <p>Error al cargar las cuentas.  Intente nuevamente más tarde.</p>
-            <!-- <button 
-                class="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                on:click={reloadAccounts}
-            >
-                Reintentar
-            </button> -->
+            <p>Error al cargar las cuentas. Intente nuevamente más tarde.</p>
         </div>
     {:else if $linksStore }
-        <div class="flex space-x-6">
-            <div class="flex-1">
-                <LinkList links={ $linksStore } />
-            </div>
-        </div>
+        <LinkList links={ $linksStore } />
     {/if}
 </div>
