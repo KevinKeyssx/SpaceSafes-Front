@@ -4,7 +4,7 @@
     import PatternBackground from "../ui/PatternBackground.svelte";
 
     export let account: Account;
-    export let selectedAccountId: number | null = null;
+    export let selectedAccountId: string | null = null;
 
     export let handleAccountClick: (account: Account) => void = () => {};
     
@@ -30,7 +30,7 @@
         on:click={() => handleAccountClick(account)}
         class="w-full relative overflow-hidden border-0 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 flex flex-col p-6 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-2xl group animate-slide-up backdrop-blur-lg {
             selectedAccountId === account.id
-            ? 'ring-2 ring-primary-300 shadow-lg shadow-primary-500/20 scale-[1.02]'
+            ? 'ring-2 ring-primary-300 shadow-lg shadow-primary-500/20'
             : 'hover:scale-[1.01] hover:shadow-xl hover:shadow-primary-500/10'
         }"
     >
@@ -41,7 +41,7 @@
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary-400/5 rounded-full blur-xl opacity-70"></div>
 
         <PatternBackground />
-        
+
         <!-- Indicador de favorito con animación -->        
         {#if account.isFavorite}
             <div class="absolute top-3 right-3 z-10 animate-pulse-slow">
@@ -57,7 +57,7 @@
         <div class="relative z-10 flex flex-col justify-center w-full">
             <!-- Avatar/Inicial del usuario -->
             <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center mb-4 shadow-lg shadow-primary-900/20 ring-2 ring-primary-400/30 transform transition-transform duration-300 group-hover:scale-110">
-                <span class="text-white text-xl font-bold">{account.username.charAt(0).toUpperCase()}</span>
+                <span class="text-white text-xl font-bold">{account.username?.charAt(0).toUpperCase()}</span>
             </div>
             
             <!-- Información del usuario -->
