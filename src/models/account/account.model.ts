@@ -1,5 +1,7 @@
+import type { Link } from "../links/link.model";
+
 export type Account = { 
-    id          : number;
+    id          : string;
     name?       : string;
     username    : string;
     password    : string;
@@ -12,4 +14,10 @@ export type Account = {
 
 export type Navly = {
     url: string;
+}
+
+
+export type AccountNavly = {
+    account: Account;
+    navly: Link;
 }
