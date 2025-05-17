@@ -2,7 +2,7 @@
     import type { Account } from "@/models/account/account.model";
     import AccountCard      from "./AccountCard.svelte";
     import AccountDetail    from "./AccountDetail.svelte";
-    import { fade } from 'svelte/transition';
+
 
     export let accounts: Account[] = [];
     export let selectedAccount: Account | null = null;
@@ -10,20 +10,7 @@
     // Estado para filtros
     let searchTerm = '';
     let showOnlyFavorites = false;
-    let isAddingAccount = false;
-    
-    // Nueva cuenta
-    let newAccount = {
-        id: 0,
-        username: '',
-        password: '',
-        name: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isFavorite: false,
-        navly: []
-    };
-    
+
     // Filtrar cuentas según criterios de búsqueda
     $: filteredAccounts = accounts.filter(account => {
         // Filtro por favoritos
@@ -44,35 +31,12 @@
     });
     
     // Manejar clic en cuenta
-    const handleAccountClick = (account: Account) => selectedAccount = account;
-    
-    // Alternar modo de añadir cuenta
-    function toggleAddAccount() {
-        isAddingAccount = !isAddingAccount;
-        if (!isAddingAccount) {
-            // Resetear formulario
-            newAccount = {
-                id: 0,
-                username: '',
-                password: '',
-                name: '',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                isFavorite: false,
-                navly: []
-            };
-        }
+    const handleAccountClick = (account: Account) => {
+
+        selectedAccount = account;
+        console.log('🚀 ~ file: AccountList.svelte:50 ~ selectedAccount:', selectedAccount)
     }
-    
-    // Añadir nueva cuenta
-    function addAccount() {
-        // Aquí implementarías la lógica para añadir la cuenta
-        // Por ejemplo, llamar a una función del store
-        console.log('Añadir cuenta:', newAccount);
-        
-        // Resetear estado
-        toggleAddAccount();
-    }
+
 </script>
 
 <div class="flex flex-col">
@@ -104,100 +68,13 @@
                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Solo favoritos</span>
                 </label>
             </div>
-            
-            <!-- Botón añadir cuenta -->
-            <button 
-                on:click={toggleAddAccount}
-                class="sm:ml-auto px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center justify-center transition-colors"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Añadir cuenta
-            </button>
+
         </div>
 
-    <!-- Formulario para añadir cuenta (condicional) -->
-    {#if isAddingAccount}
-        <div class="mb-6 bg-white dark:bg-emerald-700/30 backdrop-blur-xl rounded-lg p-5 border border-primary-200 dark:border-primary-700 shadow-lg" transition:fade={{ duration: 200 }}>
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Añadir nueva cuenta</h3>
-            
-            <form class="space-y-4" on:submit|preventDefault={addAccount}>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Nombre -->
-                    <div>
-                        <label for="new-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-                        <input 
-                            id="new-name"
-                            type="text" 
-                            bind:value={newAccount.name} 
-                            class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="Nombre (opcional)"
-                        />
-                    </div>
-                    
-                    <!-- Username -->
-                    <div>
-                        <label for="new-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
-                        <input 
-                            id="new-username"
-                            type="text" 
-                            bind:value={newAccount.username} 
-                            required
-                            class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="Username"
-                        />
-                    </div>
-                    
-                    <!-- Contraseña -->
-                    <div>
-                        <label for="new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</label>
-                        <input 
-                            id="new-password"
-                            type="password" 
-                            bind:value={newAccount.password} 
-                            required
-                            class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="Contraseña"
-                        />
-                    </div>
-                    
-                    <!-- Favorito -->
-                    <div class="flex items-center">
-                        <label for="new-favorite" class="flex items-center cursor-pointer">
-                            <input 
-                                id="new-favorite"
-                                type="checkbox" 
-                                bind:checked={newAccount.isFavorite} 
-                                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                            />
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Marcar como favorito</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Botones de acción -->
-                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <button 
-                        type="button" 
-                        on:click={toggleAddAccount}
-                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md transition-colors"
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors"
-                    >
-                        Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-    {/if}
+    
     
     <!-- Contenedor principal con layout fijo -->
-    <div class="flex">
+    <div class="flex gap-3">
         <div class="w-[calc(100%-320px)]">
             <!-- Mensaje cuando no hay resultados -->
             {#if filteredAccounts.length === 0}
@@ -230,7 +107,6 @@
             {/if}
         </div>
 
-        <div class="w-6"></div>
 
         <div class="w-[300px] flex-shrink-0">
             <AccountDetail {selectedAccount} />
