@@ -16,11 +16,13 @@
     export let open : boolean;
 
 
-    const oldUrl = link.url;
-
     let linkEdit = { 
         ...link,
+        category: link.category || "",
+        isFavorite: link.isFavorite || false
     };
+
+    const oldUrl = link.url || "";
 
     if ( !link.id || link.balanceIds.length === 0 ) {
         linkEdit.balanceIds = [];
@@ -54,13 +56,12 @@
         });
 
         console.log('🚀 ~ file: LinkForm.svelte:56 ~ savedLink:', savedLink)
-        if ( !savedLink ) {
+        if (!savedLink) {
             return;
         }
 
-        addLink( savedLink );
+        addLink(savedLink);
         open = false;
-
     }
 
 
@@ -124,7 +125,7 @@
             id="category"
             name="category"
             placeholder="Seleccionar categoría"
-            value={linkEdit.category}
+            bind:value={linkEdit.category}
             options={[
                 { value: WebsiteCategory.SOCIAL_MEDIA, label: "Redes Sociales" },
                 { value: WebsiteCategory.E_COMMERCE, label: "Compras" },
