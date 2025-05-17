@@ -1,18 +1,30 @@
-export async function loadSpaceSafes<T>( data: any[], url: string ): Promise<T | null> {
-    if ( data.length > 0 ) return;
+type Data = {
+    data?   : object[] | object,
+    url     : string,
+    method? : 'GET' | 'POST' | 'PATCH' | 'DELETE',
+};
 
+export async function loadSpaceSafes<T>(
+    { data, url, method = 'GET' }: Data,
+): Promise<T | null> {
     try {
-        const response = await fetch( url );
+        const response = await fetch(
+            url, {
+                method,
+                body    : data ? JSON.stringify(data) : undefined,
+                headers : {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
 
         if ( !response.ok ) {
             return null;
         }
 
-        const data = await response.json();
+        const responseJson = await response.json();
 
-        console.log(`Cargados ${data.length} enlaces con éxito`);
-
-        return data as T;
+        return responseJson as T;
     } catch ( err ) {
         return null;
     }
