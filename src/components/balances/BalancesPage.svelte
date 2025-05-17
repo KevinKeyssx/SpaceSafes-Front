@@ -23,7 +23,7 @@
         }
 
         setIsLoadingBalanceStore(true);
-        const balanceList = await loadSpaceSafes<Balance[]>( [], '/api/space-safes/balances' );
+        const balanceList = await loadSpaceSafes<Balance[]>({ url: '/api/space-safes/balances' });
 
         if (  balanceList === null ) {
             console.log('🚀 ~ file: LinksPage.svelte:15 ~ linkList:')
@@ -36,17 +36,17 @@
 
         setBalances( balanceList );
     });
-    
-    $: totalBalance = $balanceStore.reduce((sum, balance) => sum + balance.balance, 0);
-    
-    
-    // Formatear moneda
-    function formatCurrency(amount: number): string {
+
+
+    $: totalBalance = $balanceStore.reduce(( sum, balance ) => sum + balance.balance, 0 );
+
+
+    function formatCurrency( amount: number ): string {
         return new Intl.NumberFormat('es-ES', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2
-        }).format(amount);
+            style                   : 'currency',
+            currency                : 'EUR',
+            minimumFractionDigits   : 2
+        }).format( amount );
     }
 
     // Cerrar el modal de detalles
