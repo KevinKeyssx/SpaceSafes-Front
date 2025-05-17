@@ -17,6 +17,7 @@
         "@sveltejs/kit": "^2.20.8",
         "astro": "^5.7.12",
         "bits-ui": "^1.4.8",
+        "phosphor-svelte": "^3.0.1",
         "svelte": "^5.28.2",
         "svelte-dnd-action": "^0.9.61",
         "tailwindcss": "3.3.5",
