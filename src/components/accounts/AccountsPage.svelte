@@ -7,6 +7,9 @@
     }                               from '@/stores/accountsStore';
     import { loadAccountsStore }    from '@/lib/accounts/getAccounts';
     import AccountList              from './AccountList.svelte';
+    import Dialog from "../ui/bits/Dialog.svelte";
+    import AccountForm from "./AccountForm.svelte";
+    import type { Account } from '@/models/account/account.model';
 
 
     loadAccountsStore()
@@ -16,12 +19,35 @@
         clearAccounts();
         loadAccountsStore();
     }
+
+
+    let open = false;
 </script>
 
 <div class="animate-fade-in">
-    <h2 class="text-2xl font-bold mb-6 bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-        Cuentas
-    </h2>
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+            Cuentas
+        </h2>
+
+        <Dialog
+            buttonText="Añadir Cuenta"
+            bind:open={open}
+        >
+            {#snippet iconButton()}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path><path d="M12 5v14"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.4s" values="16;0"/></path></g></svg>
+            {/snippet}
+
+            {#snippet title()}
+                Añadir Cuenta
+            {/snippet}
+
+            <AccountForm
+                account={{} as Account}
+                bind:open={open}
+            />
+        </Dialog>       
+    </div>
 
     {#if $isLoadingAccounts}
         <div class="flex justify-center items-center p-8">
