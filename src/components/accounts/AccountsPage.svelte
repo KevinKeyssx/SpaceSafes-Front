@@ -3,22 +3,39 @@
         accounts,
         isLoadingAccounts,
         errorAccounts,
-        clearAccounts
+        clearAccounts,
+        setIsLoadingAccounts,
+        setAccounts
     }                               from '@/stores/accountsStore';
-    import { loadAccountsStore }    from '@/lib/accounts/getAccounts';
     import AccountList              from './AccountList.svelte';
-    import Dialog from "../ui/bits/Dialog.svelte";
-    import AccountForm from "./AccountForm.svelte";
-    import type { Account } from '@/models/account/account.model';
+    import Dialog                   from "../ui/bits/Dialog.svelte";
+    import AccountForm              from "./AccountForm.svelte";
+    import type { Account }         from '@/models/account/account.model';
+    import { onMount }              from 'svelte';
+    import { loadSpaceSafes }       from '@/services/fetch/getSpaceSafes';
 
 
-    loadAccountsStore()
-
-
-    function reloadAccounts() {
+    async function reloadAccounts() {
         clearAccounts();
-        loadAccountsStore();
+        await loadSpaceSafes<Account[]>({ url: '/api/space-safes/accounts' });
     }
+
+    onMount( async () => {
+        if ( $accounts.length > 0 ) {
+            return;
+        }
+
+        setIsLoadingAccounts( true );
+        const accountList = await loadSpaceSafes<Account[]>({ url: '/api/space-safes/accounts' });
+
+        if ( accountList === null ) {
+            setIsLoadingAccounts( false );
+            return;
+        }
+
+        setIsLoadingAccounts( false );
+        setAccounts( accountList );
+    });
 
 
     let open = false;
