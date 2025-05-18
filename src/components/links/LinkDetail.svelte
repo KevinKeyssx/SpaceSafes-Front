@@ -1,39 +1,16 @@
 <script lang="ts">
     import type { Link, LinkSave } from '@/models/links/link.model';
-    import { TypeBalance } from '@/models/balance/enum/type-balance.enum';
     import LinkForm from './LinkForm.svelte';
     import Dialog from '../ui/bits/Dialog.svelte';
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
     import { deleteLink } from '@/stores/linksStore';
-
     import { getBalanceIcon }   from "@/lib/balances/get-balance-icon";
 
 
     export let selectedLink: Link | null = null;
 
+
     const noImage = 'https://res.cloudinary.com/dbgzsikcs/image/upload/v1747376624/sample/3f68b623-b1d4-48a8-bd3f-6a7c3fce6397.avif'
-
-
-    // function getBalanceIcon(type: TypeBalance): string {
-    //     switch (type) {
-    //     case 'CREDIT':
-    //         return 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5z';
-    //     case 'DEBIT':
-    //         return 'M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-    //     case 'BANK_ACCOUNT':
-    //         return 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z';
-    //     case 'CASH':
-    //         return 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z';
-    //     case 'FREELANCE':
-    //         return 'M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z';
-    //     case 'SAVINGS':
-    //         return 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z';
-    //     case 'INVESTMENT':
-    //         return 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z';
-    //     default:
-    //         return 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z';
-    //     }
-    // }
 
 
     function formatDate(dateString: string): string {
@@ -47,6 +24,7 @@
 
     let isVisible = false;
     let openDelete = false;
+    let isEdit = false;
 
 
     $: if ( selectedLink ) {
@@ -54,10 +32,7 @@
     }
 
 
-    let isEdit = false;
-
-
-    function linkToLinkSave( link: Link): LinkSave {
+    function linkToLinkSave( link: Link ): LinkSave {
         return {
             id: link.id,
             name: link.name || '',
@@ -66,7 +41,9 @@
             url: link.url,
             category: link.category,
             isFavorite: link.isFavorite,
-            balanceIds: link.navlyBalances?.map(balance => balance.id) || []
+            balanceIds: link.navlyBalances?.map(balance => balance.balance.id) || [],
+            amount: link.navlyBalances?.[0]?.amount || 0,
+            expirationDate: link.navlyBalances?.[0]?.expirationDate ? new Date(link.navlyBalances?.[0]?.expirationDate).toISOString().split('T')[0] : undefined,
         };
     }
 
@@ -78,8 +55,6 @@
             url: `/api/space-safes/navly/${selectedLink.id}`,
             method: 'DELETE'
         });
-
-        console.log('🚀 ~ file: AccountForm.svelte:53 ~ savedAccount:', deletedLink)
 
         if ( deletedLink ) {
             deleteLink( selectedLink.id );
@@ -144,7 +119,7 @@
                     </div>
                 </Dialog>
             </div>
-            
+
             <!-- Botones de la esquina derecha -->
             <div class="absolute bottom-2 right-2 flex flex-col gap-2">
                 <a 
