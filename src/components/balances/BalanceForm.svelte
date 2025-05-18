@@ -1,228 +1,254 @@
-
 <script lang="ts">
     import { slide } from 'svelte/transition';
 
-    import Input            from "@/components/ui/Inputs/Input.svelte";
-    import Switch           from "@/components/ui/Inputs/Switch.svelte";
+    import Input        from "@/components/ui/Inputs/Input.svelte";
+    import Switch       from "@/components/ui/Inputs/Switch.svelte";
+    import Combobox     from '@/components/ui/Inputs/Combobox.svelte';
+
+    import { TypeCard }     from '@/models/balance/enum/type-card.enum';
+    import type { Balance } from '@/models/balance/balance.model';
+    import { TypeBalance }  from '@/models/balance/enum/type-balance.enum';
+
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
-    import type { Link, LinkSave } from '@/models/links/link.model';
-    import { addLink, updateLink } from '@/stores/linksStore';
-    import OutlineButton from '../ui/Buttons/OutlineButton.svelte';
-    import { WebsiteCategory } from '@/models/links/enum/web-category.enum';
-    import Combobox from '../ui/Inputs/Combobox.svelte';
+
+    import { addBalance, updateBalance } from '@/stores/balanceStore';
 
 
-    export let link: LinkSave = {} as LinkSave;
+    export let balance: Balance = {} as Balance;
+    export let open : boolean;
 
-    const oldUrl = link.url;
 
-    let linkEdit = { 
-        ...link,
+    let balanceEdit = { 
+        ...balance,
+        balance: balance.balance || 0,
     };
 
-    if ( !link.id || link.balanceIds.length === 0 ) {
-        linkEdit.balanceIds = [];
-    }
 
-    let navlyContainer: HTMLDivElement;
+    $: showCardFields = balanceEdit.type === TypeBalance.CREDIT || balanceEdit.type === TypeBalance.DEBIT;
+    $: showBankFields = balanceEdit.type === TypeBalance.BANK_ACCOUNT || balanceEdit.type === TypeBalance.SAVINGS || showCardFields;
 
 
-    function addBalanceId(): void {
-        linkEdit.balanceIds = [...linkEdit.balanceIds, ''];
+    async function createBalance(): Promise<void> {
+        const cleanedBalance = cleanBalanceData(balanceEdit.type);
+        console.log('🚀 ~ file: BalanceForm.svelte:45 ~ cleanedBalance:', cleanedBalance)
 
-        setTimeout(() => {
-            if (navlyContainer) {
-                navlyContainer.scrollTop = navlyContainer.scrollHeight;
-            }
-        }, 310);
-    }
-
-
-    function removeBalanceId( index: number ): void {
-        linkEdit.balanceIds = [...linkEdit.balanceIds.filter((_, i) => i !== index)];
-    }
-
-
-    async function createLink(): Promise<void> {
-        const savedLink = await loadSpaceSafes<Link>({
-            url: `/api/space-safes/navly`,
+        const savedBalance = await loadSpaceSafes<Balance>({
+            url: `/api/space-safes/balances`,
             method: 'POST',
-            data: linkEdit
+            data: cleanedBalance
         });
 
-        if ( !savedLink ) {
+        console.log('🚀 ~ file: BalanceForm.svelte:48 ~ savedBalance:', savedBalance)
+
+        if ( !savedBalance ) {
             return;
         }
 
-        addLink( savedLink );
+        addBalance( savedBalance );
+        open = false;
     }
 
-
-    async function updatedLink() {
-        const {
-            url,
-            avatar,
-            balanceIds,
-            id,
-            ...rest
-        } = linkEdit;
-
-        const updatedLinkEdit = {
-            ...rest,
-            ...( oldUrl !== linkEdit.url && { url }),
-        };
-
-        const savedLink = await loadSpaceSafes<Link>({
-            url: `/api/space-safes/navly/${linkEdit.id}`,
+    async function updatedBalance() {
+        console.log('🚀 ~ file: BalanceForm.svelte ~ updatedBalance ~ balanceEdit:', balanceEdit)
+        const cleanedBalance = cleanBalanceData(balanceEdit.type);
+        
+        const savedBalance = await loadSpaceSafes<Balance>({
+            url: `/api/space-safes/balances/${balanceEdit.id}`,
             method: 'PATCH',
-            data: updatedLinkEdit
+            data: cleanedBalance
         });
 
-        if ( !savedLink ) {
+        if ( !savedBalance ) {
             return;
         }
 
-        updateLink( savedLink );
+        updateBalance( savedBalance );
+        open = false;
     }
 
 
-    async function saveLink(): Promise<void> {
-        if ( !linkEdit.id ) {
-            createLink();
+    $: basicBalance = {
+        name        : balanceEdit.name,
+        type        : balanceEdit.type,
+        balance     : balanceEdit.balance,
+        isFavorite  : balanceEdit.isFavorite,
+    }
+
+
+    $: cardBalance = {
+        ...basicBalance,
+        typeCard            : balanceEdit.typeCard,
+        cardNumber          : balanceEdit.cardNumber,
+        expirationDate      : balanceEdit.expirationDate,
+        verificationNumber  : String(balanceEdit.verificationNumber),
+        bankName            : balanceEdit.bankName,
+        ...( balanceEdit.type === TypeBalance.DEBIT ? { accountNumber: balanceEdit.accountNumber } : {} )
+    }
+
+
+    $: bankBalance = {
+        ...basicBalance,
+        bankName        : balanceEdit.bankName,
+        accountNumber   : balanceEdit.accountNumber,
+    }
+
+
+    const cleanBalanceData = ( typeBalance: TypeBalance ): object => ({
+        [TypeBalance.CASH]          : basicBalance,
+        [TypeBalance.FREELANCE]     : basicBalance,
+        [TypeBalance.INVESTMENT]    : basicBalance,
+        [TypeBalance.OTHER]         : basicBalance,
+        [TypeBalance.CREDIT]        : cardBalance,
+        [TypeBalance.DEBIT]         : cardBalance,
+        [TypeBalance.BANK_ACCOUNT]  : bankBalance,
+        [TypeBalance.SAVINGS]       : bankBalance,
+    }[ typeBalance ] || basicBalance );
+
+
+    async function saveBalance(): Promise<void> {
+        if ( !balanceEdit.id ) {
+            await createBalance();
             return;
         }
 
-        updatedLink();
+        await updatedBalance();
     }
-
-    let disabledName = true;
-    let disabledDescription = true;
 </script>
 
 <form
-    class="p-5" on:submit|preventDefault={saveLink}
+    class="p-5" on:submit|preventDefault={saveBalance}
     transition:slide={{ duration: 300 }}
 >
-    <div class="space-y-2">
+    <div class="space-y-4">
         <Input
-            label="URL"
-            id="url"
+            label="Nombre"
+            id="name"
             type="text" 
-            placeholder="https://www.google.com"
-            bind:value={linkEdit.url}
+            placeholder="Nombre del balance"
+            bind:value={balanceEdit.name}
+            required
         />
 
         <Combobox
-            label="Categoría"
-            id="category"
-            name="category"
-            placeholder="Seleccionar categoría"
-            value={linkEdit.category}
+            id="type"
+            name="type"
+            label="Tipo de Balance"
+            placeholder="Seleccionar tipo"
+            bind:value={balanceEdit.type}
             options={[
-                { value: WebsiteCategory.SOCIAL_MEDIA, label: "Redes Sociales" },
-                { value: WebsiteCategory.E_COMMERCE, label: "Compras" },
-                { value: WebsiteCategory.FINANCE, label: "Finanzas" },
-                { value: WebsiteCategory.EDUCATION, label: "Educación" },
-                { value: WebsiteCategory.ENTERTAINMENT, label: "Entretenimiento" },
-                { value: WebsiteCategory.PRODUCTIVITY, label: "Productividad" },
-                { value: WebsiteCategory.DEVELOPMENT, label: "Desarrollo" },
-                { value: WebsiteCategory.STREAMING, label: "Streaming" },
-                { value: WebsiteCategory.GAMING, label: "Juegos" },
-                { value: WebsiteCategory.NEWS, label: "Noticias" },
-                { value: WebsiteCategory.HEALTH, label: "Salud" },
-                { value: WebsiteCategory.DESIGN, label: "Diseño" },
-                { value: WebsiteCategory.MUSIC, label: "Música" },
-                { value: WebsiteCategory.VIDEO, label: "Video" },
-                { value: WebsiteCategory.CLOUD_STORAGE, label: "Almacenamiento" },
-                { value: WebsiteCategory.EMAIL, label: "Correo" },
-                { value: WebsiteCategory.FORUM, label: "Foros" },
-                { value: WebsiteCategory.BLOG, label: "Blogs" },
-                { value: WebsiteCategory.TRAVEL, label: "Viajes" },
-                { value: WebsiteCategory.FOOD, label: "Comida" },
-                { value: WebsiteCategory.SPORTS, label: "Deportes" },
-                { value: WebsiteCategory.TECHNOLOGY, label: "Tecnología" },
-                { value: WebsiteCategory.BUSINESS, label: "Negocios" },
-                { value: WebsiteCategory.MARKETING, label: "Marketing" },
-                { value: WebsiteCategory.SCIENCE, label: "Ciencia" },
-                { value: WebsiteCategory.GOVERNMENT, label: "Gobierno" },
-                { value: WebsiteCategory.NONPROFIT, label: "Sin fines de lucro" },
-                { value: WebsiteCategory.DOCUMENTATION, label: "Documentación" },
-                { value: WebsiteCategory.PERSONAL, label: "Personal" },
-                { value: WebsiteCategory.OTHER, label: "Otros" }
+                { value: TypeBalance.CASH,          label: "Efectivo" },
+                { value: TypeBalance.CREDIT,        label: "Tarjeta de Crédito" },
+                { value: TypeBalance.DEBIT,         label: "Tarjeta de Débito" },
+                { value: TypeBalance.BANK_ACCOUNT,  label: "Cuenta Bancaria" },
+                { value: TypeBalance.SAVINGS,       label: "Cuenta de Ahorros" },
+                { value: TypeBalance.FREELANCE,     label: "Ingresos Freelance" },
+                { value: TypeBalance.INVESTMENT,    label: "Inversión" },
+                { value: TypeBalance.OTHER,         label: "Otro" },
             ]}
         />
 
-        <div class="flex gap-2 items-end">
-            <Input
-                label="Nombre del enlace"
-                id="name"
-                type="text" 
-                placeholder="Se puede generar automaticamente"
-                disabled={disabledName}
-                bind:value={linkEdit.name}
-            />
+        <Input
+            label="amount"
+            id="amount"
+            type="number"
+            min={0}
+            max={999999999}
+            placeholder="Ingrese el monto"
+            bind:value={balanceEdit.balance}
+            required
+        />
 
-            <OutlineButton
-                onClick={() => disabledName = !disabledName}
+        {#if showCardFields}
+            <div
+                transition:slide={{ duration: 300 }}
+                class="space-y-4"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="20" stroke-dashoffset="20" d="M3 21h18"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="20;0"/></path><path stroke-dasharray="48" stroke-dashoffset="48" d="M7 17v-4l10 -10l4 4l-10 10h-4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.2s" dur="0.6s" values="48;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M14 6l4 4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="8;0"/></path></g></svg>
-            </OutlineButton>
-        </div>
+                <Combobox
+                    id="type-card"
+                    name="type-card"
+                    label="Tipo de Tarjeta"
+                    placeholder="Seleccionar tipo"
+                    bind:value={balanceEdit.typeCard}
+                    options={[
+                        { value: TypeCard.VISA,             label: "Visa" },
+                        { value: TypeCard.VISA_ELECTRON,    label: "Visa Electron" },
+                        { value: TypeCard.MASTERCARD,       label: "Mastercard" },
+                        { value: TypeCard.AMERICAN_EXPRESS, label: "American Express" },
+                        { value: TypeCard.DISCOVER,         label: "Discover" },
+                        { value: TypeCard.JCB,              label: "JCB" },
+                        { value: TypeCard.DINERS_CLUB,      label: "Diners Club" },
+                        { value: TypeCard.UNIONPAY,         label: "Unionpay" },
+                        { value: TypeCard.MAESTRO,          label: "Maestro" },
+                        { value: TypeCard.ELO,              label: "Elo" },
+                        { value: TypeCard.HIPERCARD,        label: "Hipercard" },
+                        { value: TypeCard.AURA,             label: "Aura" },
+                    ]}
+                />
 
-        <div class="flex gap-2 items-end">
-            <Input
-                label="Descripción"
-                id="description"
-                type="text" 
-                placeholder="Se puede generar automaticamente"
-                disabled={disabledDescription}
-                bind:value={linkEdit.description}
-            />
+                <Input
+                    label="Número de Tarjeta"
+                    id="card-number"
+                    type="text" 
+                    placeholder="Número de Tarjeta"
+                    bind:value={balanceEdit.cardNumber!}
+                    required
+                />
 
-            <OutlineButton
-                onClick={() => disabledDescription = !disabledDescription}
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="20" stroke-dashoffset="20" d="M3 21h18"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="20;0"/></path><path stroke-dasharray="48" stroke-dashoffset="48" d="M7 17v-4l10 -10l4 4l-10 10h-4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.2s" dur="0.6s" values="48;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M14 6l4 4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="8;0"/></path></g></svg>
-            </OutlineButton>
-        </div>
+                <div class="flex gap-2">
+                    <Input
+                        label="Fecha de Expiración"
+                        id="expiration-date"
+                        type="text" 
+                        placeholder="Fecha de Expiración"
+                        bind:value={balanceEdit.expirationDate!}
+                        required
+                    />
+
+                    <Input
+                        label="Número de Verificación"
+                        id="verification-number"
+                        type="number"
+                        min={100}
+                        max={9999}
+                        placeholder="Ingrese el número de verificación"
+                        bind:value={balanceEdit.verificationNumber!}
+                        required
+                    />
+                </div>
+            </div>
+        {/if}
+
+        {#if showBankFields}
+            <div transition:slide={{ duration: 300 }}>
+                <Input
+                    label="Nombre del Banco"
+                    id="bank-name"
+                    type="text" 
+                    placeholder="Nombre del Banco"
+                    bind:value={balanceEdit.bankName!}
+                    required
+                />
+            </div>
+        {/if}
+
+        {#if balanceEdit.type === TypeBalance.DEBIT || balanceEdit.type === TypeBalance.BANK_ACCOUNT || balanceEdit.type === TypeBalance.SAVINGS}
+            <div transition:slide={{ duration: 300 }}>
+                <Input
+                    label="Número de Cuenta"
+                    id="account-number"
+                    type="text" 
+                    placeholder="Número de Cuenta"
+                    bind:value={balanceEdit.accountNumber!}
+                    required
+                />
+            </div>
+        {/if}
 
         <Switch
             label="Marcar como favorito"
             id="isFavorite"
-            bind:checked={linkEdit.isFavorite}
+            bind:checked={balanceEdit.isFavorite}
         />
-
-        <span class="text-sm font-medium text-primary-700 dark:text-primary-200 mb-1">Balances</span>
-
-        <div bind:this={navlyContainer} class="flex flex-col gap-2 max-h-60 overflow-auto p-1">
-            {#each linkEdit.balanceIds as balanceId}
-                <div
-                    class=" flex gap-2 w-full"
-                    transition:slide={{ duration: 300 }}
-                >
-                    <Input
-                        id="account-navly"
-                        type="text"
-                        bind:value={balanceId}
-                    />
-
-                    <OutlineButton
-                        onClick={() => removeBalanceId(linkEdit.balanceIds.indexOf(balanceId))}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path></svg>
-                    </OutlineButton>
-                </div>
-            {/each}
-        </div>
-
-        <button
-            type="button"
-            on:click={addBalanceId}
-            class="w-full mt-1 mx-auto rounded-lg text-center justify-center items-center px-4 py-1 ring-2 ring-primary-500 hover:bg-primary-700 text-white transition-colors flex"
-            aria-label="Agregar enlace"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path><path d="M12 5v14"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.4s" values="16;0"/></path></g></svg>
-        </button>
     </div>
 
     <button
