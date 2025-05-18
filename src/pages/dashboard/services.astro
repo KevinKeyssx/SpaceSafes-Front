@@ -1,0 +1,8 @@
+---
+import DashboardLayout  from "@/layouts/DashboardLayout.astro";
+import ServicePage      from "@/components/services/ServicePage.svelte";
+---
+
+<DashboardLayout title="Servicios">
+    <ServicePage client:only="svelte"/>
+</DashboardLayout>
