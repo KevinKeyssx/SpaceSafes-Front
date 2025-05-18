@@ -3,7 +3,7 @@
         placeholder?    : string;
         id?             : string;
         name?           : string;
-        value?          : string;
+        value?          : string | number;
         label?          : string;
         type?           : 'text' | 'email' | 'password' | 'number' | 'search';
         required?       : boolean;
@@ -18,7 +18,7 @@
         placeholder = "",
         id          = "",
         name        = "",
-        value       = $bindable<string>(),
+        value       = $bindable<string | number | undefined>(),
         label       = "",
         type        = 'text',
         required    = false,
