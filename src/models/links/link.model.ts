@@ -3,6 +3,7 @@ import { TypeBalance } from "@models/balance/enum/type-balance.enum";
 
 
 export type Balance = {
+    id      : string;
     name    : string;
     balance : number;
     type    : TypeBalance;
@@ -16,6 +17,7 @@ export type NavlyBalance = {
     createdAt       : string;
     updatedAt       : string;
     balance         : Balance;
+    amount          : number;
 };
 
 
@@ -51,4 +53,6 @@ export type LinkSave = {
     category        : WebsiteCategory;
     isFavorite      : boolean;
     balanceIds      : string[];
+    amount?         : number;
+    expirationDate? : string;
 }
