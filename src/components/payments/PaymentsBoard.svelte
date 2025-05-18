@@ -1,357 +1,393 @@
-<script lang="ts">
-  import PaymentItem from './PaymentItem.svelte';
-  import BalanceSelector from './BalanceSelector.svelte';
-
-  // Definición de tipos
-  interface PaymentMethod {
-    type: string;
-    brand?: string;
-    last4?: string;
-    name?: string;
-  }
-
-  interface Website {
-    url: string;
-    name: string;
-  }
-
-  interface Payment {
-    id: number;
-    description: string;
-    recipient: string;
-    amount: number;
-    dueDate: string;
-    status: 'pending' | 'paid';
-    paymentMethod: PaymentMethod;
-    website?: Website;
-  }
-
-  interface Balance {
-    id: number;
-    name: string;
-    amount: number;
-    category: string;
-  }
-
-  // Props
-  export let initialPayments: Payment[] = [];
-  export let initialBalances: Balance[] = [];
-
-  // Estado
-  let payments = initialPayments;
-  let balances = initialBalances;
-  let selectedBalanceId = initialBalances.length > 0 ? initialBalances[0].id : null;
-  let searchPending = '';
-  let searchPaid = '';
-  let currentMonth = new Date();
-  
-  // Variables para pagos filtrados
-  let pendingItems: Payment[] = [];
-  let paidItems: Payment[] = [];
-
-  // Variables para HTML5 Drag and Drop
-  let draggedPayment: Payment | null = null;
-  let dragOverContainer: string | null = null;
-
-
-
-  // Función para filtrar pagos por mes y año
-  function filterByMonth(payment: Payment): boolean {
-    const paymentDate = new Date(payment.dueDate);
-    return paymentDate.getMonth() === currentMonth.getMonth() && 
-           paymentDate.getFullYear() === currentMonth.getFullYear();
-  }
-  
-  // Filtrar pagos por estado, búsqueda y mes (reactividad)
-  $: {
-    const filtered = payments.filter(filterByMonth);
-    
-    pendingItems = filtered
-      .filter(payment => payment.status === 'pending')
-      .filter(payment => 
-        searchPending === '' || 
-        payment.description.toLowerCase().includes(searchPending.toLowerCase()) ||
-        payment.recipient.toLowerCase().includes(searchPending.toLowerCase())
-      );
-    
-    paidItems = filtered
-      .filter(payment => payment.status === 'paid')
-      .filter(payment => 
-        searchPaid === '' || 
-        payment.description.toLowerCase().includes(searchPaid.toLowerCase()) ||
-        payment.recipient.toLowerCase().includes(searchPaid.toLowerCase())
-      );
-  }
-  
-  // Calcular totales (reactividad)
-  $: pendingTotal = pendingItems.reduce((sum, payment) => sum + payment.amount, 0);
-  $: paidTotal = paidItems.reduce((sum, payment) => sum + payment.amount, 0);
-  
-  // Función para formatear moneda
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  }
-
-  // Funciones para HTML5 Drag and Drop
-  function handleDragStart(event: DragEvent, payment: Payment): void {
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('application/json', JSON.stringify(payment));
-      draggedPayment = payment;
+<script context="module" lang="ts">
+    export interface Balance {
+        id: string;
+        name: string;
+        currentAmount: number;
+        currency: string;
+        // ... any other balance-specific fields like 'type', 'bankName', etc. that BalanceCard might need
     }
-  }
-
-  function handleDragOver(event: DragEvent, container: string): void {
-    event.preventDefault();
-    if (dragOverContainer !== container) {
-      dragOverContainer = container;
-    }
-  }
-
-  function handleDragLeave(): void {
-    dragOverContainer = null;
-  }
-
-  function handleDrop(event: DragEvent, targetStatus: 'pending' | 'paid'): void {
-    event.preventDefault();
-    if (!draggedPayment) return;
-
-    // Si el pago se está moviendo a otro contenedor, actualiza su estado
-    if (draggedPayment.status !== targetStatus) {
-      changePaymentStatus(draggedPayment, targetStatus);
-    }
-
-    draggedPayment = null;
-    dragOverContainer = null;
-  }
-  
-  // Función para cambiar el estado de un pago
-  function changePaymentStatus(payment: Payment, newStatus: 'pending' | 'paid'): void {
-    if (payment.status === newStatus) return;
-
-    // Actualizar balance
-    if (newStatus === 'paid' && payment.status === 'pending') {
-      // Restar del balance al pagar
-      if (selectedBalanceId) {
-        balances = balances.map(balance => 
-          balance.id === selectedBalanceId
-            ? { ...balance, amount: balance.amount - payment.amount }
-            : balance
-        );
-      }
-    } else if (newStatus === 'pending' && payment.status === 'paid') {
-      // Sumar al balance al devolver a pendiente
-      if (selectedBalanceId) {
-        balances = balances.map(balance => 
-          balance.id === selectedBalanceId 
-            ? { ...balance, amount: balance.amount + payment.amount }
-            : balance
-        );
-      }
-    }
-
-    // Actualizar el estado del pago
-    payments = payments.map(p => 
-      p.id === payment.id
-        ? { ...p, status: newStatus }
-        : p
-    );
-  }
-
-
-  // Función para cambiar de mes
-  function changeMonth(increment: number): void {
-    const newDate = new Date(currentMonth);
-    newDate.setMonth(newDate.getMonth() + increment);
-    currentMonth = newDate;
-  }
-  
-  // Formatear el mes y año actual
-  function formatMonthYear(date: Date): string {
-    return new Intl.DateTimeFormat('es-ES', {
-      month: 'long',
-      year: 'numeric'
-    }).format(date);
-  }
 </script>
 
-<div class="space-y-6">
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-    <h1 class="text-2xl font-bold text-primary-900 dark:text-primary-100">Gestión de Pagos</h1>
+<script lang="ts">
+    import { onMount, tick } from 'svelte';
+    import { writable, type Writable } from 'svelte/store';
+    // Stores - Assuming paymentServiceStore is correctly set up elsewhere
+    import { paymentServiceStore } from '@/stores/paymentServiceStore';
+    import type { PaymentService as BackendPaymentService } from '@/models/payment-services/payment-service.model';
+
+    interface ClientPaymentService extends BackendPaymentService {
+        isSavedToDB?: boolean;
+    } 
+    import Input from '@/components/ui/Inputs/Input.svelte';
+    import BalanceCard from './BalanceCard.svelte';
+    import PaymentCard from './PaymentCard.svelte';
+
+    // Type definitions
+    // Ensure PaymentService is correctly defined in your store or models
+    // For example: 
+    // export interface PaymentService {
+    //    id: string;
+    //    description: string;
+    //    amount: number;
+    //    currency: string;
+    //    dueDate?: string; // Or your date field for determining month
+    //    status?: 'pending' | 'paid' | 'overdue'; // More granular status if needed
+    //    paidDate?: string;
+    //    balanceId?: string; // ID of the balance used for payment
+    //    recurring?: boolean;
+    //    nextDueDate?: string; // For recurring payments
+    //    // ... other relevant fields
+    // }
+
+
+
+    // Component State
+    let currentMonth = new Date();
     
-    <div class="flex items-center space-x-4">
-      <div class="flex items-center bg-primary-50/50 dark:bg-primary-800/50 px-4 py-2 rounded-lg shadow-sm border border-primary-200/50 dark:border-primary-700/50">
-        <button 
-          on:click={() => changeMonth(-1)}
-          class="text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-100 p-1"
-          aria-label="Mes anterior"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-        </button>
+    let allUserPaymentServices: ClientPaymentService[] = []; // Raw from $paymentServiceStore subscription
+    let pendingPayments: ClientPaymentService[] = []; // Filtered for current month & pending status
+    let clientSidePaidPayments: ClientPaymentService[] = []; // User-marked as paid in this session
+
+    let selectedPendingIDs = writable(new Set<string>());
+    let selectedPaidIDs = writable(new Set<string>());
+
+    // Balances - for now, mock data. Replace with store subscription.
+    let displayedBalances: Writable<Balance[]> = writable([
+        { id: 'bal1', name: 'Cuenta Principal', currentAmount: 1500.75, currency: 'EUR' },
+        { id: 'bal2', name: 'Ahorros', currentAmount: 5300.00, currency: 'EUR' },
+        { id: 'bal3', name: 'Efectivo', currentAmount: 350.00, currency: 'EUR' },
+    ]);
+    let selectedBalanceForPayment: Writable<Balance | null> = writable(null);
+
+    let pendingSearchQuery = '';
+    let paidSearchQuery = '';
+
+    // --- Svelte Store Subscriptions ---
+    paymentServiceStore.subscribe(backendServices => {
+        allUserPaymentServices = backendServices.map(p => ({ ...p, isSavedToDB: true }));
+        loadPaymentsForMonth(currentMonth); // Reload when underlying store changes
+    });
+
+    // Initialize selectedBalanceForPayment if balances exist
+    displayedBalances.subscribe(balances => {
+        if (balances.length > 0 && !$selectedBalanceForPayment) {
+            selectedBalanceForPayment.set(balances[0]);
+        }
+    });
+
+    // --- Totals (Reactive) ---
+    $: pendingTotal = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+    $: paidTotal = clientSidePaidPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    // --- Filtered Lists (Reactive) ---
+    $: filteredPendingPayments = pendingPayments.filter(p => 
+        (p.description?.toLowerCase() || '').includes(pendingSearchQuery.toLowerCase())
+    );
+
+    $: filteredPaidPayments = clientSidePaidPayments.filter(p => 
+        (p.description?.toLowerCase() || '').includes(paidSearchQuery.toLowerCase())
+    );
+
+    // --- Lifecycle ---
+    onMount(() => {
+        // Initial load is handled by store subscription
+        // If $paymentServiceStore might be populated async after mount, ensure loadPaymentsForMonth is robust
+        if ($displayedBalances.length > 0) {
+           selectedBalanceForPayment.set($displayedBalances[0]);
+        }
+    });
+
+    // --- Month Navigation ---
+    function changeMonth(increment: number): void {
+        const newDate = new Date(currentMonth);
+        newDate.setDate(1); 
+        newDate.setMonth(newDate.getMonth() + increment);
+        currentMonth = newDate;
+        loadPaymentsForMonth(currentMonth);
+    }
+
+    function formatMonthYear(date: Date): string {
+        return new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date);
+    }
+
+    // --- Data Loading & Filtering ---
+    function loadPaymentsForMonth(date: Date): void {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+
+        // Logic to determine if a PaymentService is 'pending' for the currentMonth
+        // This assumes PaymentService has a dueDate or similar and lacks a paidDate or has status 'pending'
+        pendingPayments = allUserPaymentServices.filter(p => {
+            const dueDate = p.expirationDate ? new Date(p.expirationDate) : null; // Use appropriate date field
+            if (!dueDate) return false;
+            // Adjust for UTC if dates are stored in UTC to avoid timezone issues with getMonth/getFullYear
+            const dueYear = dueDate.getUTCFullYear();
+            const dueMonth = dueDate.getUTCMonth();
+            
+            const isCurrentMonth = dueYear === year && dueMonth === month;
+            // Define what makes a payment 'pending' for this month (e.g., not paid yet, or explicit status)
+            // This might involve checking a `p.status` or if `p.paidDate` is null/in the future
+            const isPendingStatus = !p.paidDate; // Example: if it has no paidDate, it's pending for its due month
+            
+            return isCurrentMonth && isPendingStatus;
+        });
+
+        // Logic for 'paid' payments for the currentMonth
+        // These would typically be services that *were* paid *within* this specific month.
+        clientSidePaidPayments = allUserPaymentServices.filter(p => {
+            if (!p.paidDate) return false;
+            const paidDate = new Date(p.paidDate);
+            const paidYear = paidDate.getUTCFullYear();
+            const paidMonth = paidDate.getUTCMonth();
+            return paidYear === year && paidMonth === month && p.balanceId !== undefined; // Has been associated with a balance
+        });
+
+        // Reset selections when month changes
+        selectedPendingIDs.update(s => { s.clear(); return s; });
+        selectedPaidIDs.update(s => { s.clear(); return s; });
         
-        <span class="mx-3 font-medium text-primary-900 dark:text-primary-100 capitalize">
-          {formatMonthYear(currentMonth)}
-        </span>
+        tick(); // Ensure UI updates after data changes
+    }
+
+    // --- Selection Handling ---
+    function togglePendingSelection(id: string): void {
+        selectedPendingIDs.update(set => {
+            set.has(id) ? set.delete(id) : set.add(id);
+            return set;
+        });
+    }
+
+    function togglePaidSelection(id: string): void {
+        selectedPaidIDs.update(set => {
+            set.has(id) ? set.delete(id) : set.add(id);
+            return set;
+        });
+    }
+
+    function handleBalanceSelection(balance: Balance | null): void {
+        selectedBalanceForPayment.set(balance);
+    }
+
+    // --- Core Actions (Implement these with API calls and store updates) ---
+    async function handleMoveToPaid(): Promise<void> {
+        if ($selectedPendingIDs.size === 0 || !$selectedBalanceForPayment) {
+            alert('Seleccione pagos pendientes y un balance.');
+            return;
+        }
+        const balance = $selectedBalanceForPayment;
+        const paymentsToMove: ClientPaymentService[] = [];
         
-        <button 
-          on:click={() => changeMonth(1)}
-          class="text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-100 p-1"
-          aria-label="Mes siguiente"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
-        </button>
-      </div>
-      
-      <div class="w-64">
-        <BalanceSelector 
-          balances={balances} 
-          selectedBalanceId={selectedBalanceId} 
-          onSelectBalance={(id) => selectedBalanceId = id} 
-        />
-      </div>
-    </div>
-  </div>
-  
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Columna de pagos pendientes -->
-    <div 
-      id="pending-container"
-      class="bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 p-4 transition-all {dragOverContainer === 'pending' ? 'bg-blue-100/30 dark:bg-blue-800/20 border-blue-300/50 dark:border-blue-700/50' : ''}"
-      on:dragover={(e) => handleDragOver(e, 'pending')}
-      on:dragleave={handleDragLeave}
-      on:drop={(e) => handleDrop(e, 'pending')}
-      role="region"
-      aria-label="Pagos pendientes"
-    >
-      <div class="space-y-3 mb-4">
-        <div class="flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-primary-900 dark:text-primary-100 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-yellow-500" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Pagos Pendientes
-          </h2>
-          <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 rounded-full text-sm font-medium">
-            {formatCurrency(pendingTotal)}
-          </span>
-        </div>
+        pendingPayments = pendingPayments.filter(p => {
+            if ($selectedPendingIDs.has(p.id)) {
+                paymentsToMove.push({...p, balanceId: balance.id, paidDate: new Date().toISOString(), status: 'paid', isSavedToDB: false}); // Mark as paid
+                return false; // Remove from pending
+            }
+            return true;
+        });
+
+        clientSidePaidPayments = [...clientSidePaidPayments, ...paymentsToMove];
         
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-primary-500" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </div>
-          <input
-            type="text"
-            placeholder="Buscar pagos pendientes..."
-            class="w-full pl-10 pr-4 py-2 bg-primary-50/50 dark:bg-primary-800/50 border border-primary-200/50 dark:border-primary-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 text-primary-900 dark:text-primary-100 text-sm"
-            bind:value={searchPending}
-            aria-label="Buscar pagos pendientes"
-          />
-        </div>
-      </div>
-      
-      <div class="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
-        {#if pendingItems.length === 0}
-          <div class="text-center py-8 text-primary-500 dark:text-primary-400">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto mb-2 opacity-50" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-            </svg>
-            <p>No hay pagos pendientes</p>
-            <p class="text-sm">Arrastra aquí para marcar como pendiente</p>
-          </div>
-        {:else}
-          {#each pendingItems as item (item.id)}
-            <div
-              class="cursor-move hover:scale-[1.01] transition-transform"
-              draggable="true"
-              on:dragstart={(e) => handleDragStart(e, item)}
-            >
-              <PaymentItem 
-                payment={item} 
-                isDragging={draggedPayment === item}
-                onDragStart={() => {}}
-              />
-            </div>
-          {/each}
-        {/if}
-      </div>
-    </div>
-    
-    <div class="space-y-6">
-      <!-- Sección de pagos realizados -->
-      <div 
-        id="paid-container"
-        class="bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 p-4 transition-all {dragOverContainer === 'paid' ? 'bg-blue-100/30 dark:bg-blue-800/20 border-blue-300/50 dark:border-blue-700/50' : ''}"
-        on:dragover={(e) => handleDragOver(e, 'paid')}
-        on:dragleave={handleDragLeave}
-        on:drop={(e) => handleDrop(e, 'paid')}
-        role="region"
-        aria-label="Pagos realizados"
-      >
-        <div class="space-y-3 mb-4">
-          <div class="flex justify-between items-center">
-            <h2 class="text-lg font-semibold text-primary-900 dark:text-primary-100 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-green-500" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Pagos Realizados
-            </h2>
-            <span class="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
-              {formatCurrency(paidTotal)}
-            </span>
-          </div>
-          
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-primary-500" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Buscar pagos realizados..."
-              class="w-full pl-10 pr-4 py-2 bg-primary-50/50 dark:bg-primary-800/50 border border-primary-200/50 dark:border-primary-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 text-primary-900 dark:text-primary-100 text-sm"
-              bind:value={searchPaid}
-              aria-label="Buscar pagos realizados"
-            />
-          </div>
-        </div>
-          
-        <div class="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
-          {#if paidItems.length === 0}
-            <div class="text-center py-6 text-primary-500 dark:text-primary-400">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 mx-auto mb-2 opacity-50" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 01-.75.75h-.75m-6-1.5H2.25m19.5 0v.75c0 .414-.336.75-.75.75h-.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 01-.75.75h-.75" />
-              </svg>
-              <p>No hay pagos realizados</p>
-              <p class="text-sm">Arrastra aquí para marcar como pagado</p>
-            </div>
-          {:else}
-            {#each paidItems as item (item.id)}
-              <div
-                class="cursor-move hover:scale-[1.01] transition-transform"
-                draggable="true"
-                on:dragstart={(e) => handleDragStart(e, item)}
-              >
-                <PaymentItem 
-                  payment={item} 
-                  isDragging={draggedPayment === item}
-                  onDragStart={() => {}}
+        // Update balance (client-side first)
+        const totalAmountToPay = paymentsToMove.reduce((sum, p) => sum + p.amount, 0);
+        displayedBalances.update(bals => bals.map(bal => 
+            bal.id === balance.id ? { ...bal, currentAmount: bal.currentAmount - totalAmountToPay } : bal
+        ));
+
+        selectedPendingIDs.update(s => { s.clear(); return s; });
+        console.log('Moved to paid (client-side):', paymentsToMove);
+        await tick();
+    }
+
+    async function handleMoveToPending(): Promise<void> {
+        if ($selectedPaidIDs.size === 0) {
+            alert('Seleccione pagos realizados para mover a pendientes.');
+            return;
+        }
+        const paymentsToRevert: ClientPaymentService[] = [];
+        const balanceUpdates: { balanceId: string; amount: number }[] = [];
+
+        clientSidePaidPayments = clientSidePaidPayments.filter(p => {
+            if ($selectedPaidIDs.has(p.id)) {
+                if (p.balanceId) {
+                    balanceUpdates.push({ balanceId: p.balanceId, amount: p.amount });
+                }
+                // Remove balanceId and paidDate, effectively making it pending for its due month
+                // The status field might not be strictly necessary if paidDate is the source of truth for paid status
+                paymentsToRevert.push({...p, balanceId: undefined, paidDate: undefined, status: 'pending', isSavedToDB: false }); 
+                return false; // Remove from client-side paid
+            }
+            return true;
+        });
+
+        // Add to pending only if they belong to the current displayed month
+        // Or, more robustly, let loadPaymentsForMonth re-filter them from allUserPaymentServices after backend update
+        // For now, let's add them to pendingPayments directly if they fit the current month's criteria.
+        const currentMonthDate = new Date(currentMonth);
+        const currentYear = currentMonthDate.getFullYear();
+        const currentM = currentMonthDate.getMonth();
+
+        paymentsToRevert.forEach(pTR => {
+            const dueDate = pTR.expirationDate ? new Date(pTR.expirationDate) : null;
+            if (dueDate && dueDate.getUTCFullYear() === currentYear && dueDate.getUTCMonth() === currentM) {
+                pendingPayments = [...pendingPayments, pTR];
+            }
+            // If not for current month, they will be picked up when user navigates to their respective month,
+            // assuming allUserPaymentServices is updated after API call.
+        });
+        pendingPayments.sort((a, b) => (new Date(a.expirationDate || 0)).getTime() - (new Date(b.expirationDate || 0)).getTime());
+
+        // Update balances
+        displayedBalances.update(bals => {
+            const newBalances = bals.map(bal => {
+                const relevantUpdate = balanceUpdates.find(upd => upd.balanceId === bal.id);
+                if (relevantUpdate) {
+                    return { ...bal, currentAmount: bal.currentAmount + relevantUpdate.amount };
+                }
+                return bal;
+            });
+            return newBalances;
+        });
+        
+        selectedPaidIDs.update(s => { s.clear(); return s; });
+        console.log('Moved to pending (client-side):', paymentsToRevert);
+        await tick(); 
+        // TODO: API Call - update payment status on backend for each reverted payment.
+        // This should ideally update allUserPaymentServices via paymentServiceStore, triggering a reactive reload.
+        // For example: await paymentService.markAsPending(paymentsToRevert.map(p => p.id));
+        // After successful API call, paymentServiceStore should be updated.
+    }
+
+    async function handleSavePaidPayments(): Promise<void> {
+        const paymentsToSave = clientSidePaidPayments.filter(p=>!p.isSavedToDB); // Example: Add a flag like isSavedToDB
+        if (paymentsToSave.length === 0) {
+            alert('No hay nuevos pagos realizados para guardar en la base de datos.');
+            return;
+        }
+        console.log('Guardando en BD (simulado):', paymentsToSave);
+        // TODO: API Call to save each payment in paymentsToSave
+        // For each payment:
+        //   - Call your API (e.g., updatePaymentService(payment.id, { status: 'paid', paidDate: payment.paidDate, balanceId: payment.balanceId }))
+        //   - On success, update paymentServiceStore if needed, or mark clientSidePaidPayment as 'isSavedToDB = true'
+        //   - Handle API errors
+        alert('Simulación: Pagos guardados en BD. Implementar API real.');
+        // Example: clientSidePaidPayments.forEach(p => p.isSavedToDB = true); clientSidePaidPayments = [...clientSidePaidPayments];
+    }
+
+    // --- Formatting Utilities ---
+    function formatCurrency(amount: number, currency = 'EUR'): string {
+        return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(amount);
+    }
+
+    // --- Mock Payment Card (Replace with your actual PaymentCard.svelte component) ---
+    // This is a simplified stand-in for demonstration.
+    // Your PaymentCard should emit a 'toggle' event or accept selection state via prop.
+
+
+</script>
+
+<div class="p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-800 min-h-screen text-gray-800 dark:text-gray-200">
+    <!-- Balances Display Section -->
+    <section aria-labelledby="balances-title">
+        <h2 id="balances-title" class="text-xl font-semibold mb-3">Mis Balances</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+            {#each $displayedBalances as balance (balance.id)}
+                <BalanceCard 
+                    {balance} 
+                    isSelected={$selectedBalanceForPayment?.id === balance.id} 
+                    on:select={(event) => handleBalanceSelection(event.detail)} 
                 />
-              </div>
+            {:else}
+                <p class="col-span-full text-center text-gray-500 dark:text-gray-400 py-4">No hay balances para mostrar.</p>
             {/each}
-          {/if}
         </div>
-      </div>
+    </section>
+
+    <!-- Month Navigation & Title -->
+    <header class="flex flex-col sm:flex-row justify-between items-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 mb-6">
+        <h1 class="text-2xl font-bold mb-2 sm:mb-0">Gestión de Pagos Mensuales</h1>
+        <div class="flex items-center space-x-2">
+            <button on:click={() => changeMonth(-1)} class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-primary-600 dark:text-primary-400" aria-label="Mes anterior">
+                &lt; Anterior
+            </button>
+            <h2 class="text-lg font-semibold tabular-nums w-40 text-center">{formatMonthYear(currentMonth)}</h2>
+            <button on:click={() => changeMonth(1)} class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-primary-600 dark:text-primary-400" aria-label="Mes siguiente">
+                Siguiente &gt;
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content: Pending and Paid Columns -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Pending Payments Column -->
+        <section aria-labelledby="pending-payments-title" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="pending-payments-title" class="text-lg font-semibold">Pendientes ({filteredPendingPayments.length})</h3>
+                <p class="font-semibold text-orange-500 dark:text-orange-400">Total: {formatCurrency(pendingTotal)}</p>
+            </div>
+            <Input type="search" placeholder="Buscar en pendientes..." bind:value={pendingSearchQuery} label="Filtrar pendientes" id="pendingSearch" />
+            
+            <div class="flex-grow min-h-[300px] max-h-[45vh] overflow-y-auto space-y-2 p-1 border dark:border-gray-700 rounded-md">
+                {#each filteredPendingPayments as payment (payment.id)}
+                    <PaymentCard 
+                        {payment } 
+                        isSelected={$selectedPendingIDs.has(payment.id)} 
+                        on:toggleSelect={(event) => togglePendingSelection(event.detail.id)} 
+                    />
+                {:else}
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-10">No hay pagos pendientes para este mes o filtro.</p>
+                {/each}
+            </div>
+
+            {#if pendingPayments.length > 0}
+                <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                    <select bind:value={$selectedBalanceForPayment} 
+                            class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
+                        <option value={null} disabled>Seleccione un balance...</option>
+                        {#each $displayedBalances as balance (balance.id)}
+                            <option value={balance}>{balance.name} ({formatCurrency(balance.currentAmount, balance.currency)})</option>
+                        {/each}
+                    </select>
+                    <button on:click={handleMoveToPaid} 
+                            class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={$selectedPendingIDs.size === 0 || !$selectedBalanceForPayment}>
+                        Marcar como Pagado &rarr;
+                    </button>
+                </div>
+            {/if}
+        </section>
+
+        <!-- Paid Payments Column -->
+        <section aria-labelledby="paid-payments-title" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="paid-payments-title" class="text-lg font-semibold">Realizados ({filteredPaidPayments.length})</h3>
+                <p class="font-semibold text-green-600 dark:text-green-400">Total: {formatCurrency(paidTotal)}</p>
+            </div>
+            <Input type="search" placeholder="Buscar en realizados..." bind:value={paidSearchQuery} label="Filtrar realizados" id="paidSearch" />
+
+            <div class="flex-grow min-h-[300px] max-h-[45vh] overflow-y-auto space-y-2 p-1 border dark:border-gray-700 rounded-md">
+                {#each filteredPaidPayments as payment (payment.id)}
+                    <PaymentCard 
+                        {payment} 
+                        isSelected={$selectedPaidIDs.has(payment.id)} 
+                        on:toggleSelect={(event) => togglePaidSelection(event.detail.id)} 
+                    />
+                {:else}
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-10">No hay pagos realizados para este mes o filtro.</p>
+                {/each}
+            </div>
+
+            <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                 <button on:click={handleMoveToPending} 
+                        class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={$selectedPaidIDs.size === 0}>
+                    &larr; Mover a Pendientes
+                </button>
+                <button on:click={handleSavePaidPayments} 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={clientSidePaidPayments.filter(p=>!p.isSavedToDB).length === 0 && $selectedPaidIDs.size === 0}>
+                    Guardar Cambios en BD
+                </button>
+            </div>
+        </section>
     </div>
-  </div>
 </div>
