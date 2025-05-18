@@ -29,13 +29,11 @@ export const POST: APIRoute = async (context: APIContext) => {
     const endpoint  = context.params.endpoint;
     const body      = await context.request.json();
     const url       = `${baseUrl}/${endpoint}`;
-    console.log('🚀 ~ file: index.ts:33 ~ url:', url)
     
     const request = {
         ...body,
         userId,
     }
-    console.log('🚀 ~ file: index.ts:31 ~ request:', request)
 
     try {
         const response = await fetch(url, {
