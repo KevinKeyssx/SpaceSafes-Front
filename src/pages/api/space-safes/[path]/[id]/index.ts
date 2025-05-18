@@ -6,8 +6,16 @@ export const PATCH: APIRoute = async (context: APIContext<{ path: string, id: st
     const token         = context.locals.authToken;
     const baseUrl       = ENV_SERVER.API_BASE_URL;
     const { path, id }  = context.params;
-    const body          = await context.request.json();
+    let body          = await context.request.json();
     const url           = `${baseUrl}/${path}/${id}`;
+
+    if ( path === 'navly' ) {
+
+        body = {
+            ...body,
+            userId,
+        }
+    }
 
     try {
         const response = await fetch(url, {
@@ -16,7 +24,7 @@ export const PATCH: APIRoute = async (context: APIContext<{ path: string, id: st
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify( body ),
+            body: JSON.stringify(body),
         });
 
         const data = await response.json();
