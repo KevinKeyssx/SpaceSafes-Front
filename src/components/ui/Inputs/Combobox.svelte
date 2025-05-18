@@ -79,7 +79,7 @@
         <div class="flex items-center h-10 w-full px-4 py-2 bg-primary-800/50 border-none ring-1 ring-primary-400 hover:ring-primary-500 focus-within:ring-2 rounded-xl text-primary-300 transition-all duration-300 backdrop-blur-sm shadow-sm">
             <MagnifyingGlass class="text-primary-400 mr-2 size-4" />
             <input
-                type="text"
+                type="search"
                 {id}
                 {name}
                 {required}
