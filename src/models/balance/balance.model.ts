@@ -17,7 +17,7 @@ export type NavlyBalance = {
 export type Balance = {
     id: string;
     name: string;
-    type: TypeBalance | null;
+    type: TypeBalance;
     balance: number;
     typeCard: TypeCard | null;
     cardNumber: string | null;
@@ -28,5 +28,6 @@ export type Balance = {
     lastPayment: string | null;
     createdAt: string;
     updatedAt: string;
+    isFavorite: boolean;
     navlyBalances: NavlyBalance[];
 };  
