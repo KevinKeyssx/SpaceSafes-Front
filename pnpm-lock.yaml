@@ -23,6 +23,9 @@ importers:
       '@clerk/localizations':
         specifier: ^3.15.2
         version: 3.15.2
+      '@internationalized/date':
+        specifier: ^3.8.0
+        version: 3.8.0
       '@sveltejs/kit':
         specifier: ^2.20.8
         version: 2.20.8(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.28.2)(vite@6.3.5(@types/node@22.15.17)(jiti@1.21.7)(yaml@2.7.1)))(svelte@5.28.2)(vite@6.3.5(@types/node@22.15.17)(jiti@1.21.7)(yaml@2.7.1))
@@ -38,9 +41,6 @@ importers:
       svelte:
         specifier: ^5.28.2
         version: 5.28.2
-      svelte-dnd-action:
-        specifier: ^0.9.61
-        version: 0.9.61(svelte@5.28.2)
       tailwindcss:
         specifier: 3.3.5
         version: 3.3.5
@@ -1839,11 +1839,6 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
-
-  svelte-dnd-action@0.9.61:
-    resolution: {integrity: sha512-xj0jZNdV44MAMbdGIAuBYEombmK7A7ticemOtdR5ErWw0f3IxcfcnrRjlYEK0rRjsahVsU+VdGUMwjPVyXrSrA==}
-    peerDependencies:
-      svelte: '>=3.23.0 || ^5.0.0-next.0'
 
   svelte-toolbelt@0.7.1:
     resolution: {integrity: sha512-HcBOcR17Vx9bjaOceUvxkY3nGmbBmCBBbuWLLEWO6jtmWH8f/QoWmbyUfQZrpDINH39en1b8mptfPQT9VKQ1xQ==}
@@ -4299,10 +4294,6 @@ snapshots:
       ts-interface-checker: 0.1.13
 
   supports-preserve-symlinks-flag@1.0.0: {}
-
-  svelte-dnd-action@0.9.61(svelte@5.28.2):
-    dependencies:
-      svelte: 5.28.2
 
   svelte-toolbelt@0.7.1(svelte@5.28.2):
     dependencies:
