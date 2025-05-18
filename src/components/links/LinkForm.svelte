@@ -1,66 +1,108 @@
 
 <script lang="ts">
-    import { slide } from 'svelte/transition';
+    import { slide }    from 'svelte/transition';
+    import { onMount }  from 'svelte';
 
-    import Input            from "@/components/ui/Inputs/Input.svelte";
+    import { 
+        balanceStore, 
+        isLoadingBalanceStore, 
+        setIsLoadingBalanceStore, 
+        setBalances 
+    }                               from '@/stores/balanceStore';
+    import { addLink, updateLink }  from '@/stores/linksStore';
+
     import Switch           from "@/components/ui/Inputs/Switch.svelte";
+    import Input            from "@/components/ui/Inputs/Input.svelte";
+    import OutlineButton    from '@/components/ui/Buttons/OutlineButton.svelte';
+    import Combobox         from '@/components/ui/Inputs/Combobox.svelte';
+
+    import { WebsiteCategory }      from '@/models/links/enum/web-category.enum';
+    import type { Link, LinkSave }  from '@/models/links/link.model';
+    import type { Balance }         from '@/models/balance/balance.model';
+
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
-    import type { Link, LinkSave } from '@/models/links/link.model';
-    import { addLink, updateLink } from '@/stores/linksStore';
-    import OutlineButton from '../ui/Buttons/OutlineButton.svelte';
-    import { WebsiteCategory } from '@/models/links/enum/web-category.enum';
-    import Combobox from '../ui/Inputs/Combobox.svelte';
 
 
-    export let link: LinkSave = {} as LinkSave;
+    export let link : LinkSave = {} as LinkSave;
     export let open : boolean;
 
 
-    let linkEdit = { 
+    let disabledName        = true;
+    let disabledDescription = true;
+    let navlyContainer      : HTMLDivElement;
+    let isLoadingBalances   = false;
+    let linkEdit            = { 
         ...link,
-        category: link.category || "",
-        isFavorite: link.isFavorite || false
+        category    : link.category     || "",
+        isFavorite  : link.isFavorite   || false
     };
 
-    const oldUrl = link.url || "";
+
+    const oldUrl = link.url;
+
 
     if ( !link.id || link.balanceIds.length === 0 ) {
         linkEdit.balanceIds = [];
     }
 
-    let navlyContainer: HTMLDivElement;
+    // Cargar los balances si no están ya cargados
+    onMount(async () => {
+        if ( $balanceStore.length === 0 ) {
+            isLoadingBalances = true;
+
+            setIsLoadingBalanceStore( true );
+
+            const balanceList = await loadSpaceSafes<Balance[]>({ url: '/api/space-safes/balances' });
+
+            if ( balanceList !== null ) {
+                setBalances( balanceList );
+            }
+
+            setIsLoadingBalanceStore( false );
+            isLoadingBalances = false;
+        }
+
+    console.log('🚀 ~ file: LinkForm.svelte:80 ~ linkEdit.balanceIds:', linkEdit.balanceIds)
+
+    });
+
+    // Filtrar los balances que ya están seleccionados
+    $: availableBalances = $balanceStore.filter(balance => 
+        !linkEdit.balanceIds.includes(balance.id)
+    );
+
+    // Crear opciones para el combobox
+    $: balanceOptions = availableBalances.map(balance => ({
+        value: balance.id,
+        label: balance.name
+    }));
 
 
     function addBalanceId(): void {
         linkEdit.balanceIds = [...linkEdit.balanceIds, ''];
-
-        setTimeout(() => {
-            if (navlyContainer) {
-                navlyContainer.scrollTop = navlyContainer.scrollHeight;
-            }
-        }, 310);
     }
 
 
     function removeBalanceId( index: number ): void {
-        linkEdit.balanceIds = [...linkEdit.balanceIds.filter((_, i) => i !== index)];
+        linkEdit.balanceIds = [...linkEdit.balanceIds.filter(( _, i ) => i !== index )];
     }
 
 
     async function createLink(): Promise<void> {
         console.log('🚀 ~ file: LinkForm.svelte:53 ~ linkEdit:', linkEdit)
         const savedLink = await loadSpaceSafes<Link>({
-            url: `/api/space-safes/navly`,
-            method: 'POST',
-            data: linkEdit
+            url     : `/api/space-safes/navly`,
+            method  : 'POST',
+            data    : linkEdit
         });
 
         console.log('🚀 ~ file: LinkForm.svelte:56 ~ savedLink:', savedLink)
-        if (!savedLink) {
+
+        if ( !savedLink ) {
             return;
         }
 
-        addLink(savedLink);
+        addLink( savedLink );
         open = false;
     }
 
@@ -69,7 +111,7 @@
         const {
             url,
             avatar,
-            balanceIds,
+            // balanceIds,
             id,
             ...rest
         } = linkEdit;
@@ -78,23 +120,27 @@
             ...rest,
             ...( oldUrl !== linkEdit.url && { url }),
         };
+        console.log('🚀 ~ file: LinkForm.svelte:120 ~ updatedLinkEdit:', updatedLinkEdit)
 
         const savedLink = await loadSpaceSafes<Link>({
-            url: `/api/space-safes/navly/${linkEdit.id}`,
-            method: 'PATCH',
-            data: updatedLinkEdit
+            url     : `/api/space-safes/navly/${linkEdit.id}`,
+            method  : 'PATCH',
+            data    : updatedLinkEdit
         });
-
+        
+        console.log('🚀 ~ file: LinkForm.svelte:126 ~ savedLink:', savedLink)
         if ( !savedLink ) {
             return;
         }
 
         updateLink( savedLink );
-        open = false;
+        // open = false;
     }
 
 
     async function saveLink(): Promise<void> {
+        linkEdit.balanceIds = linkEdit.balanceIds.filter( id => id.trim() !== '' );
+
         if ( !linkEdit.id ) {
             createLink();
             return;
@@ -103,8 +149,6 @@
         updatedLink();
     }
 
-    let disabledName = true;
-    let disabledDescription = true;
 </script>
 
 <form
@@ -202,35 +246,97 @@
 
         <span class="text-sm font-medium text-primary-700 dark:text-primary-200 mb-1">Balances</span>
 
-        <div bind:this={navlyContainer} class="flex flex-col gap-2 max-h-60 overflow-auto p-1">
-            {#each linkEdit.balanceIds as balanceId}
+        {#if isLoadingBalances || $isLoadingBalanceStore}
+            <div class="flex justify-center items-center py-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
+                <span class="ml-2 text-primary-600">Cargando balances...</span>
+            </div>
+        {:else if $balanceStore.length === 0}
+            <div class="text-center py-4 text-gray-500">
+                No hay balances disponibles. Por favor, crea un balance primero.
+            </div>
+        {:else}
+            <div bind:this={navlyContainer} class="flex flex-col gap-2">
+                {#each linkEdit.balanceIds as balanceId, index}
+                    <div
+                        class="flex gap-2 w-full"
+                        transition:slide={{ duration: 300 }}
+                    >
+                        {#if balanceId}
+                            <!-- Balance ya seleccionado -->
+                            {#if $balanceStore.find( b => b.id === balanceId )}
+                                <div class="flex-1 border-none py-2 px-4 ring-1 ring-primary-400 hover:ring-primary-500 focus:ring-2 rounded-lg bg-primary-50/50 dark:bg-primary-800/50 items-center text-primary-300">
+                                    {#if index === 0}
+                                        <span class="text-[11px] rounded-lg py-1 px-2 bg-primary-600/50 text-primary-50">
+                                            Principal
+                                        </span>
+                                    {/if}
+
+                                    {$balanceStore.find( b => b.id === balanceId )?.name || 'Balance no encontrado'}
+                                </div>
+                            {:else}
+                                <div class="flex-1 border-none py-2 px-4 ring-1 ring-primary-400 hover:ring-primary-500 focus:ring-2 rounded-lg bg-primary-50/50 dark:bg-primary-800/50 items-center text-red-800">
+                                    Balance no encontrado
+                                </div>
+                            {/if}
+                        {:else}
+                            <!-- Selector de balance -->
+                            <div class="flex-1">
+                                <Combobox
+                                    id={`balanceid-${index}`}
+                                    name={`balanceid-${index}`}
+                                    placeholder="Seleccionar balance"
+                                    bind:value={linkEdit.balanceIds[index]}
+                                    options={balanceOptions}
+                                />
+                            </div>
+                        {/if}
+
+                        <OutlineButton
+                            onClick={() => removeBalanceId(index)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path></svg>
+                        </OutlineButton>
+                    </div>
+                {/each}
+            </div>
+
+            <button
+                type="button"
+                on:click={addBalanceId}
+                disabled={linkEdit.balanceIds.length >= 5 || availableBalances.length === 0}
+                class="disabled:opacity-50 w-full mt-1 mx-auto rounded-lg text-center justify-center items-center px-4 py-1 ring-2 ring-primary-500 hover:bg-primary-700 text-white transition-colors flex"
+                aria-label="Agregar balance"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="mr-1"><g fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path><path d="M12 5v14"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.4s" values="16;0"/></path></g></svg>
+                Agregar balance
+            </button>
+
+            {#if linkEdit.balanceIds.length > 0 && linkEdit.balanceIds[0] !== ''}
                 <div
-                    class=" flex gap-2 w-full"
+                    class="grid grid-cols-2 gap-2"
                     transition:slide={{ duration: 300 }}
                 >
                     <Input
-                        id="account-navly"
-                        type="text"
-                        bind:value={balanceId}
+                        label="Importe"
+                        id="amount"
+                        type="number" 
+                        placeholder="Ingrese el importe"
+                        required
+                        bind:value={linkEdit.amount}
                     />
 
-                    <OutlineButton
-                        onClick={() => removeBalanceId(linkEdit.balanceIds.indexOf(balanceId))}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path></svg>
-                    </OutlineButton>
+                    <Input
+                        label="Fecha de expiración"
+                        id="expirationDate"
+                        type="text" 
+                        placeholder="Ingrese la fecha de expiración"
+                        required
+                        bind:value={linkEdit.expirationDate}
+                    />
                 </div>
-            {/each}
-        </div>
-
-        <button
-            type="button"
-            on:click={addBalanceId}
-            class="w-full mt-1 mx-auto rounded-lg text-center justify-center items-center px-4 py-1 ring-2 ring-primary-500 hover:bg-primary-700 text-white transition-colors flex"
-            aria-label="Agregar enlace"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M5 12h14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="16;0"/></path><path d="M12 5v14"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.4s" values="16;0"/></path></g></svg>
-        </button>
+            {/if}
+        {/if}
     </div>
 
     <button
