@@ -1,94 +1,25 @@
 <script lang="ts">
-    import type { Balance } from '@/models/balance/balance.model';
-    import { TypeBalance } from '@/models/balance/enum/type-balance.enum';
-    import { TypeCard } from '@/models/balance/enum/type-card.enum';
     import { fade } from 'svelte/transition';
 
-    // Props
+    import PatternBackground    from '@/components/ui/PatternBackground.svelte';
+    import Dialog               from '@/components/ui/bits/Dialog.svelte';
+    import BalanceForm          from '@/components/balances/BalanceForm.svelte';
+
+    import type { Balance } from '@/models/balance/balance.model';
+    import { TypeBalance }  from '@/models/balance/enum/type-balance.enum';
+
+    import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
+
+    import { deleteBalance } from '@/stores/balanceStore';
+
+    import { getBalanceIcon }   from '@/lib/balances/get-balance-icon';
+    import { getCategoryName }  from '@/lib/balances/get-category-name';
+    import { getCardTypeName }  from '@/lib/balances/get-card-type-name';
+    import { getCategoryColor } from '@/lib/balances/get-category-color';
+
+
     export let selectedBalance: Balance | null = null;
-    
-    // Función para obtener el ícono según el tipo de balance
-    function getBalanceIcon(type: TypeBalance | null): string {
-        if (!type) return '';
-        
-        switch (type) {
-            case TypeBalance.CASH:
-                return 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 01-.75.75h-.75m-6-1.5H2.25m19.5 0v.75c0 .414-.336.75-.75.75h-.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 01-.75.75h-.75';
-            case TypeBalance.BANK_ACCOUNT:
-                return 'M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z';
-            case TypeBalance.CREDIT:
-                return 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z';
-            case TypeBalance.DEBIT:
-                return 'M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-            case TypeBalance.FREELANCE:
-                return 'M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z';
-            case TypeBalance.SAVINGS:
-                return 'M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z';
-            case TypeBalance.INVESTMENT:
-                return 'M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941';
-            default:
-                return 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z';
-        }
-    }
-    
-    // Función para obtener el nombre del tipo de balance
-    function getBalanceTypeName(type: TypeBalance | null): string {
-        if (!type) return 'No especificado';
-        
-        switch (type) {
-            case TypeBalance.CASH:
-                return 'Efectivo';
-            case TypeBalance.BANK_ACCOUNT:
-                return 'Cuenta Bancaria';
-            case TypeBalance.CREDIT:
-                return 'Tarjeta de Crédito';
-            case TypeBalance.DEBIT:
-                return 'Tarjeta de Débito';
-            case TypeBalance.FREELANCE:
-                return 'Trabajo Freelance';
-            case TypeBalance.INVESTMENT:
-                return 'Inversión';
-            case TypeBalance.SAVINGS:
-                return 'Ahorros';
-            default:
-                return 'Otro';
-        }
-    }
-    
-    // Función para obtener el nombre del tipo de tarjeta
-    function getCardTypeName(type: TypeCard | null): string {
-        if (!type) return 'No especificado';
-        
-        switch (type) {
-            case TypeCard.VISA:
-                return 'Visa';
-            case TypeCard.VISA_ELECTRON:
-                return 'Visa Electron';
-            case TypeCard.MASTERCARD:
-                return 'Mastercard';
-            case TypeCard.AMERICAN_EXPRESS:
-                return 'American Express';
-            case TypeCard.DISCOVER:
-                return 'Discover';
-            case TypeCard.JCB:
-                return 'JCB';
-            case TypeCard.DINERS_CLUB:
-                return 'Diners Club';
-            case TypeCard.UNIONPAY:
-                return 'UnionPay';
-            case TypeCard.MAESTRO:
-                return 'Maestro';
-            case TypeCard.ELO:
-                return 'Elo';
-            case TypeCard.HIPERCARD:
-                return 'Hipercard';
-            case TypeCard.AURA:
-                return 'Aura';
-            default:
-                return 'Desconocido';
-        }
-    }
-    
+
     // Función para formatear la fecha
     function formatDate(dateString: string | null): string {
         if (!dateString) return 'No disponible';
@@ -100,16 +31,16 @@
         };
         return new Date(dateString).toLocaleDateString('es-ES', options);
     }
-    
+
     // Función para formatear moneda
     function formatCurrency(amount: number): string {
         return new Intl.NumberFormat('es-ES', {
             style: 'currency',
-            currency: 'EUR',
+            currency: 'USD',
             minimumFractionDigits: 2
         }).format(amount);
     }
-    
+
     // Función para formatear número de tarjeta
     function formatCardNumber(cardNumber: string | null): string {
         if (!cardNumber) return 'No disponible';
@@ -124,10 +55,32 @@
 
     // Estado
     let isVisible = false;
-    
+    let openDelete = false;
+    let isEdit = false;
+
     // Reactividad
-    $: if (selectedBalance) {
+    $: if ( selectedBalance ) {
         isVisible = true;
+    }
+
+
+    async function confirmDelete(): Promise<void> {
+        if ( !selectedBalance ) return;
+
+        const deletedBalance = await loadSpaceSafes<Balance>({
+            url: `/api/space-safes/balances/${selectedBalance.id}`,
+            method: 'DELETE'
+        });
+
+        console.log('🚀 ~ file: AccountForm.svelte:53 ~ savedAccount:', deletedBalance)
+
+        if ( !deletedBalance ) {
+            return;
+        }
+
+        deleteBalance( selectedBalance.id );
+        openDelete = false;
+        selectedBalance = null;
     }
 </script>
 
@@ -142,144 +95,197 @@
         class="overflow-auto bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 transition-all duration-300 {isVisible ? 'opacity-100' : 'opacity-0'}"
         transition:fade={{ duration: 300 }}
     >
-        <!-- Header con el tipo de balance -->
-        <div class="relative">
-            <div class="w-full h-48 bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 text-white">
-                    <path stroke-linecap="round" stroke-linejoin="round" d={getBalanceIcon(selectedBalance.type)} />
-                </svg>
-            </div>
+        <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0">
+            <!-- Elementos decorativos de fondo que se escalan con el contenedor -->
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
+            <PatternBackground patternId="balanceGrid-{selectedBalance.id}" />
         </div>
-        
+
+        <header class="relative">
+            <div class="w-full h-48 py-4 bg-gradient-to-br {getCategoryColor(selectedBalance.type)} grid items-center justify-center relative">
+                <div class="absolute top-4 right-4 z-20 text-yellow-400">
+                    {#if selectedBalance.isFavorite}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" fill-opacity="0" d="M12 3l2.35 5.76l6.21 0.46l-4.76 4.02l1.49 6.04l-5.29 -3.28l-5.29 3.28l1.49 -6.04l-4.76 -4.02l6.21 -0.46Z"><animate fill="freeze" attributeName="fill-opacity" begin="0.5s" dur="0.5s" values="0;1"/></path><path fill="none" stroke="currentColor" stroke-dasharray="36" stroke-dashoffset="36" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l-2.35 5.76l-6.21 0.46l4.76 4.02l-1.49 6.04l5.29 -3.28M12 3l2.35 5.76l6.21 0.46l-4.76 4.02l1.49 6.04l-5.29 -3.28"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.5s" values="36;0"/></path></svg>
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="36" stroke-dashoffset="36" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l-2.35 5.76l-6.21 0.46l4.76 4.02l-1.49 6.04l5.29 -3.28M12 3l2.35 5.76l6.21 0.46l-4.76 4.02l1.49 6.04l-5.29 -3.28"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.5s" values="36;0"/></path></svg>
+                    {/if}
+                </div>
+
+                <Dialog
+                    openButtonClass="absolute bottom-4 left-4 bg-rose-300 hover:bg-rose-400 shadow-lg p-1 rounded-lg transition-colors duration-300"
+                    bind:open={openDelete}
+                >
+                    {#snippet iconButton()}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="24" stroke-dashoffset="24" d="M12 20h5c0.5 0 1 -0.5 1 -1v-14M12 20h-5c-0.5 0 -1 -0.5 -1 -1v-14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0"/></path><path stroke-dasharray="20" stroke-dashoffset="20" d="M4 5h16"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.2s" values="20;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M10 4h4M10 9v7M14 9v7"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.2s" values="8;0"/></path></g></svg>
+                    {/snippet}
+
+                    {#snippet title()}
+                        Eliminar Balance
+                    {/snippet}
+
+                    <div class="space-y-2 w-full">
+                        <p class="text-primary-200 grid text-center">¿Estás seguro de eliminar el balance?
+                            <span class="text-primary-500">
+                                Esta acción no se puede deshacer.
+                            </span>
+                        </p>
+
+                        <button 
+                            type="button" 
+                            on:click={confirmDelete}
+                            class="mx-auto gap-2 flex justify-center px-4 py-1 w-48 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="24" stroke-dashoffset="24" d="M12 20h5c0.5 0 1 -0.5 1 -1v-14M12 20h-5c-0.5 0 -1 -0.5 -1 -1v-14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0"/></path><path stroke-dasharray="20" stroke-dashoffset="20" d="M4 5h16"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.2s" values="20;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M10 4h4M10 9v7M14 9v7"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.2s" values="8;0"/></path></g></svg>
+                            Eliminar Balance
+                        </button>
+                    </div>
+                </Dialog>
+
+                <!-- Botón de editar (esquina derecha) -->
+                <button
+                    class="absolute bottom-4 right-4 bg-primary-500/50 hover:bg-primary-600 shadow-lg p-1 rounded-lg transition-colors duration-300"
+                    aria-label="Editar Balance"
+                    on:click={() => isEdit = !isEdit}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="20" stroke-dashoffset="20" d="M3 21h18"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="20;0"/></path><path stroke-dasharray="48" stroke-dashoffset="48" d="M7 17v-4l10 -10l4 4l-10 10h-4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.2s" dur="0.6s" values="48;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M14 6l4 4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="8;0"/></path></g><path fill="currentColor" fill-opacity="0" d="M14 6l4 4L21 7L17 3Z"><animate fill="freeze" attributeName="fill-opacity" begin="1.1s" dur="0.15s" values="0;0.3"/></path></svg>
+                </button>
+
+                <div class="bg-white/20  shadow-xl rounded-full flex items-center justify-center p-4 h-20 w-20 mx-auto">
+                    <svelte:component this={getBalanceIcon(selectedBalance?.type)} class="w-16 h-16 text-primary-100" />
+                </div>
+
+                <div class="flex justify-center items-start">
+                    <h2 class="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                        {selectedBalance.name}
+                    </h2>
+                </div>
+            </div>
+        </header>
+
+        {#if isEdit}
+            <BalanceForm
+                balance={selectedBalance}
+                bind:open={isEdit}
+            />
+        {:else}
         <!-- Contenido principal -->
-        <div class="p-6">
-            <div class="flex justify-between items-start mb-4">
-                <h2 class="text-2xl font-bold text-primary-900 dark:text-primary-100">
-                    {selectedBalance.name}
-                </h2>
-                
-                <div class="text-2xl font-bold text-primary-600 dark:text-primary-300">
+            <main class="p-6">
+                <h2 class="text-2xl font-bold text-primary-600 dark:text-primary-300">
                     {formatCurrency(selectedBalance.balance)}
-                </div>
-            </div>
-            
-            <!-- Tipo de balance -->
-            <div class="mb-4">
-                <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">Tipo de Balance</h3>
-                <div class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-primary-600 dark:text-primary-300">
-                        <path stroke-linecap="round" stroke-linejoin="round" d={getBalanceIcon(selectedBalance.type)} />
-                    </svg>
-                    <span class="text-primary-800 dark:text-primary-200">
-                        {getBalanceTypeName(selectedBalance.type)}
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Detalles específicos según el tipo -->
-            {#if selectedBalance.type === TypeBalance.BANK_ACCOUNT}
+                </h2>
+
+                <!-- Tipo de balance -->
                 <div class="mb-4">
-                    <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">Detalles Bancarios</h3>
-                    
-                    {#if selectedBalance.bankName}
-                        <div class="mb-2">
-                            <span class="text-primary-500 dark:text-primary-400">Banco:</span>
-                            <span class="ml-2 text-primary-800 dark:text-primary-200">{selectedBalance.bankName}</span>
-                        </div>
-                    {/if}
-                    
-                    {#if selectedBalance.accountNumber}
-                        <div class="mb-2">
-                            <span class="text-primary-500 dark:text-primary-400">Número de Cuenta:</span>
-                            <span class="ml-2 text-primary-800 dark:text-primary-200 font-mono">{selectedBalance.accountNumber}</span>
-                        </div>
-                    {/if}
+                    <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">Tipo de Balance</h3>
+                    <div class="flex items-center gap-2">
+                        <svelte:component this={getBalanceIcon(selectedBalance?.type)} class="w-6 h-6 text-primary-100" />
+
+                        <span class="text-primary-800 dark:text-primary-200">
+                            {getCategoryName(selectedBalance.type)}
+                        </span>
+                    </div>
                 </div>
-            {:else if selectedBalance.type === TypeBalance.CREDIT || selectedBalance.type === TypeBalance.DEBIT}
-                <div class="mb-4">
-                    <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">Detalles de Tarjeta</h3>
-                    
-                    {#if selectedBalance.typeCard}
-                        <div class="mb-2">
-                            <span class="text-primary-500 dark:text-primary-400">Tipo de Tarjeta:</span>
-                            <span class="ml-2 text-primary-800 dark:text-primary-200">{getCardTypeName(selectedBalance.typeCard)}</span>
-                        </div>
-                    {/if}
-                    
-                    {#if selectedBalance.cardNumber}
-                        <div class="mb-2">
-                            <span class="text-primary-500 dark:text-primary-400">Número de Tarjeta:</span>
-                            <span class="ml-2 text-primary-800 dark:text-primary-200 font-mono">{formatCardNumber(selectedBalance.cardNumber)}</span>
-                        </div>
-                    {/if}
-                    
-                    {#if selectedBalance.expirationDate}
-                        <div class="mb-2">
-                            <span class="text-primary-500 dark:text-primary-400">Fecha de Expiración:</span>
-                            <span class="ml-2 text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.expirationDate)}</span>
-                        </div>
-                    {/if}
-                </div>
-            {/if}
-            
-            <!-- Enlaces asociados (Navly) -->
-            {#if selectedBalance.navlyBalances && selectedBalance.navlyBalances.length > 0}
-                <div class="mb-4">
-                    <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-2">Enlaces Asociados</h3>
-                    <div class="space-y-2">
-                        {#each selectedBalance.navlyBalances as navlyBalance}
-                            <div class="bg-primary-50 dark:bg-primary-700/50 p-3 rounded-lg">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="font-medium text-primary-800 dark:text-primary-200">{navlyBalance.navly.name}</div>
-                                        <a 
-                                            href={navlyBalance.navly.url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            class="text-primary-600 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-100 text-sm flex items-center"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                                            </svg>
-                                            <span class="truncate">{navlyBalance.navly.url}</span>
-                                        </a>
-                                    </div>
-                                    <div class="text-xs px-2 py-1 bg-primary-100 dark:bg-primary-600 text-primary-700 dark:text-primary-200 rounded-full">
-                                        {navlyBalance.navly.category}
+
+                <!-- Detalles específicos según el tipo -->
+                {#if selectedBalance.type === TypeBalance.BANK_ACCOUNT}
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">Detalles Bancarios</h3>
+                        
+                        {#if selectedBalance.bankName}
+                            <div class="mb-2">
+                                <span class="text-primary-500 dark:text-primary-400">Banco:</span>
+                                <span class="ml-2 text-primary-800 dark:text-primary-200">{selectedBalance.bankName}</span>
+                            </div>
+                        {/if}
+                        
+                        {#if selectedBalance.accountNumber}
+                            <div class="mb-2">
+                                <span class="text-primary-500 dark:text-primary-400">Número de Cuenta:</span>
+                                <span class="ml-2 text-primary-800 dark:text-primary-200 font-mono">{selectedBalance.accountNumber}</span>
+                            </div>
+                        {/if}
+                    </div>
+                {:else if selectedBalance.type === TypeBalance.CREDIT || selectedBalance.type === TypeBalance.DEBIT}
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">Detalles de Tarjeta</h3>
+                        
+                        {#if selectedBalance.typeCard}
+                            <div class="mb-2">
+                                <span class="text-primary-500 dark:text-primary-400">Tipo de Tarjeta:</span>
+                                <span class="ml-2 text-primary-800 dark:text-primary-200">{getCardTypeName(selectedBalance.typeCard)}</span>
+                            </div>
+                        {/if}
+
+                        {#if selectedBalance.cardNumber}
+                            <div class="mb-2">
+                                <span class="text-primary-500 dark:text-primary-400">Número de Tarjeta:</span>
+                                <span class="ml-2 text-primary-800 dark:text-primary-200 font-mono">{formatCardNumber(selectedBalance.cardNumber)}</span>
+                            </div>
+                        {/if}
+
+                        {#if selectedBalance.expirationDate}
+                            <div class="mb-2">
+                                <span class="text-primary-500 dark:text-primary-400">Fecha de Expiración:</span>
+                                <span class="ml-2 text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.expirationDate)}</span>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+
+                <!-- Enlaces asociados (Navly) -->
+                {#if selectedBalance.navlyBalances && selectedBalance.navlyBalances.length > 0}
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-primary-700 dark:text-primary-300 mb-2">Enlaces Asociados</h3>
+                        <div class="space-y-2">
+                            {#each selectedBalance.navlyBalances as navlyBalance}
+                                <div class="bg-primary-50 dark:bg-primary-700/50 p-3 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-primary-800 dark:text-primary-200">{navlyBalance.navly.name}</div>
+                                            <a 
+                                                href={navlyBalance.navly.url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                class="text-primary-600 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-100 text-sm flex items-center"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                                </svg>
+                                                <span class="truncate">{navlyBalance.navly.url}</span>
+                                            </a>
+                                        </div>
+                                        <div class="text-xs px-2 py-1 bg-primary-100 dark:bg-primary-600 text-primary-700 dark:text-primary-200 rounded-full">
+                                            {navlyBalance.navly.category}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        {/each}
-                    </div>
-                </div>
-            {/if}
-            
-            <!-- Metadatos -->
-            <div class="mt-6 pt-4 border-t border-primary-200/50 dark:border-primary-700/50">
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <p class="text-primary-500 dark:text-primary-400">ID</p>
-                        <p class="text-primary-800 dark:text-primary-200 truncate">{selectedBalance.id}</p>
-                    </div>
-                    
-                    {#if selectedBalance.lastPayment}
-                        <div>
-                            <p class="text-primary-500 dark:text-primary-400">Último Pago</p>
-                            <p class="text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.lastPayment)}</p>
+                            {/each}
                         </div>
-                    {/if}
-                    
-                    <div>
-                        <p class="text-primary-500 dark:text-primary-400">Creado</p>
-                        <p class="text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.createdAt)}</p>
                     </div>
-                    
-                    <div>
-                        <p class="text-primary-500 dark:text-primary-400">Actualizado</p>
-                        <p class="text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.updatedAt)}</p>
+                {/if}
+
+                <!-- Metadatos -->
+                <footer class="mt-6 pt-4 border-t border-primary-200/50 dark:border-primary-700/50">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        {#if selectedBalance.lastPayment}
+                            <div>
+                                <p class="text-primary-500 dark:text-primary-400">Último Pago</p>
+                                <p class="text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.lastPayment)}</p>
+                            </div>
+                        {/if}
+
+                        <div>
+                            <p class="text-primary-500 dark:text-primary-400">Creado</p>
+                            <p class="text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.createdAt)}</p>
+                        </div>
+
+                        <div>
+                            <p class="text-primary-500 dark:text-primary-400">Actualizado</p>
+                            <p class="text-primary-800 dark:text-primary-200">{formatDate(selectedBalance.updatedAt)}</p>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </footer>
+            </main>
+        {/if}
     </div>
 {/if}
