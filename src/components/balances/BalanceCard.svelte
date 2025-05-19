@@ -26,7 +26,7 @@
 
 <div
     transition:fade={{ duration: 300 }}
-    class="animate-slide-up  relative w-full text-left bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 backdrop-blur-xl rounded-xl shadow-lg border border-primary-600/30 dark:border-primary-700/50 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-xl hover:shadow-primary-500/20 group"
+    class="animate-slide-up relative w-full text-left bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 backdrop-blur-xl rounded-xl shadow-lg border border-primary-600/30 dark:border-primary-700/50 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-xl hover:shadow-primary-500/20 group"
 >
 <!-- Contenedor interno para el efecto de escala -->
     <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0">
