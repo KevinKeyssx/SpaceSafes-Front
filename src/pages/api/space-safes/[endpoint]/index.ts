@@ -29,10 +29,21 @@ export const POST: APIRoute = async (context: APIContext) => {
     const endpoint  = context.params.endpoint;
     const body      = await context.request.json();
     const url       = `${baseUrl}/${endpoint}`;
-    
-    const request = {
-        ...body,
-        userId,
+
+    let request: object;
+
+    if ( endpoint === 'payment-details' ) {
+        request = {
+            month           : body.month,
+            year            : body.year,
+            userId          : context.locals.userId,
+            paymentDetails   : body.paymentDetails
+        };
+    } else {
+        request = {
+            ...body,
+            userId,
+        }
     }
 
     try {
@@ -42,7 +53,7 @@ export const POST: APIRoute = async (context: APIContext) => {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(request),
+            body: JSON.stringify( request ),
         });
 
         const data = await response.json();
