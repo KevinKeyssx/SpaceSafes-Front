@@ -1,393 +1,594 @@
-<script context="module" lang="ts">
-    export interface Balance {
-        id: string;
-        name: string;
-        currentAmount: number;
-        currency: string;
-        // ... any other balance-specific fields like 'type', 'bankName', etc. that BalanceCard might need
-    }
-</script>
-
 <script lang="ts">
-    import { onMount, tick } from 'svelte';
-    import { writable, type Writable } from 'svelte/store';
-    // Stores - Assuming paymentServiceStore is correctly set up elsewhere
-    import { paymentServiceStore } from '@/stores/paymentServiceStore';
-    import type { PaymentService as BackendPaymentService } from '@/models/payment-services/payment-service.model';
+    import { onMount } from 'svelte';
 
-    interface ClientPaymentService extends BackendPaymentService {
-        isSavedToDB?: boolean;
-    } 
-    import Input from '@/components/ui/Inputs/Input.svelte';
+    import {
+        paymentDetailStore,
+        addMultiplePaymentDetails,
+        setIsLoadingPaymentDetailStore
+    }                                       from '@/stores/paymentDetail.Store';
+    import {
+        paymentServiceStore,
+        setIsLoadingPaymentServiceStore,
+        setPaymentServices
+    }                                       from '@/stores/paymentServiceStore';
+    import {
+        balanceStore,
+        setBalances,
+        setIsLoadingBalanceStore,
+        updateBalance
+    }                                       from '@/stores/balanceStore';
+
+    import type { PaymentService }  from '@/models/payment-services/payment-service.model';
+    import type { Balance }         from '@/models/balance/balance.model';
+    import type { PaymentDetail }   from '@/models/payment-detail/payment-detail.model';
+
+    import Input                from '@/components/ui/Inputs/Input.svelte';
+    import PaymentCard          from '@/components/payments/PaymentCard.svelte';
+    import PaymentDetailCard    from '@/components/payments/PaymentDetailCard.svelte';
+    import PatternBackground    from '@/components/ui/PatternBackground.svelte';
+
+    import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
+
     import BalanceCard from './BalanceCard.svelte';
-    import PaymentCard from './PaymentCard.svelte';
-
-    // Type definitions
-    // Ensure PaymentService is correctly defined in your store or models
-    // For example: 
-    // export interface PaymentService {
-    //    id: string;
-    //    description: string;
-    //    amount: number;
-    //    currency: string;
-    //    dueDate?: string; // Or your date field for determining month
-    //    status?: 'pending' | 'paid' | 'overdue'; // More granular status if needed
-    //    paidDate?: string;
-    //    balanceId?: string; // ID of the balance used for payment
-    //    recurring?: boolean;
-    //    nextDueDate?: string; // For recurring payments
-    //    // ... other relevant fields
-    // }
 
 
-
-    // Component State
     let currentMonth = new Date();
-    
-    let allUserPaymentServices: ClientPaymentService[] = []; // Raw from $paymentServiceStore subscription
-    let pendingPayments: ClientPaymentService[] = []; // Filtered for current month & pending status
-    let clientSidePaidPayments: ClientPaymentService[] = []; // User-marked as paid in this session
-
-    let selectedPendingIDs = writable(new Set<string>());
-    let selectedPaidIDs = writable(new Set<string>());
-
-    // Balances - for now, mock data. Replace with store subscription.
-    let displayedBalances: Writable<Balance[]> = writable([
-        { id: 'bal1', name: 'Cuenta Principal', currentAmount: 1500.75, currency: 'EUR' },
-        { id: 'bal2', name: 'Ahorros', currentAmount: 5300.00, currency: 'EUR' },
-        { id: 'bal3', name: 'Efectivo', currentAmount: 350.00, currency: 'EUR' },
-    ]);
-    let selectedBalanceForPayment: Writable<Balance | null> = writable(null);
-
+    let balanceSelected: Balance | null = null;
+    let selectedPendingIDs = new Set<string>();
+    let selectedPaidIDs = new Set<string>();
     let pendingSearchQuery = '';
-    let paidSearchQuery = '';
+    let porRealizarSearchQuery = ''; // For the middle "Por Realizar" panel
+    let paidSearchQuery = ''; // For the rightmost "Realizados" panel
+    let paymentCompleted: PaymentService[] = []; // Temporary store for payments marked as paid
 
-    // --- Svelte Store Subscriptions ---
-    paymentServiceStore.subscribe(backendServices => {
-        allUserPaymentServices = backendServices.map(p => ({ ...p, isSavedToDB: true }));
-        loadPaymentsForMonth(currentMonth); // Reload when underlying store changes
+
+    $: displayedBalances = $balanceStore;
+
+
+    $: realizadosForCurrentMonth = ($paymentDetailStore || []).filter((pd: PaymentDetail) => {
+        if (!pd || !pd.payment) return false;
+
+        return pd.payment.year === currentMonth.getFullYear() && 
+            pd.payment.month === currentMonth.getMonth() + 1;
     });
 
-    // Initialize selectedBalanceForPayment if balances exist
-    displayedBalances.subscribe(balances => {
-        if (balances.length > 0 && !$selectedBalanceForPayment) {
-            selectedBalanceForPayment.set(balances[0]);
+    $: pendingPayments = ($paymentServiceStore || []).filter((service: PaymentService) => {
+        if (!service || !service.id) return false; // Basic existence check
+        // Exclude if permanently paid (already in paymentDetailStore for the current month)
+        const isPermanentlyPaid = realizadosForCurrentMonth.some(
+            (pd: PaymentDetail) => pd && pd.paymentService && pd.paymentService.id === service.id
+        );
+        if (isPermanentlyPaid) return false;
+
+        // Exclude if temporarily marked as paid (in paymentCompleted array for 'Por Realizar' column)
+        const isTemporarilyCompleted = paymentCompleted.some(
+            (pc: PaymentService) => pc.id === service.id
+        );
+        if (isTemporarilyCompleted) return false;
+
+        return true;
+    }).filter(s => s) as PaymentService[]; // .filter(s => s) removes any null/undefined from array if types were looser
+
+
+    $: paidTotal = filteredPaidPayments ? filteredPaidPayments.reduce((sum, service) => sum + service.amount, 0) : 0;
+    $: pendingTotal = pendingPayments.reduce((sum, p: PaymentService) => sum + (p?.amount || 0), 0);
+    $: filteredRealizadosDetails = realizadosForCurrentMonth
+        .filter((pd: PaymentDetail) => {
+            if (!paidSearchQuery.trim()) return true; // Show all if search is empty
+            const searchTerm = paidSearchQuery.toLowerCase();
+            return (pd.paymentService?.description?.toLowerCase().includes(searchTerm)) ||
+                (pd.paymentService?.id?.toLowerCase().includes(searchTerm)) ||
+                (pd.amount.toString().toLowerCase().includes(searchTerm));
+        });
+
+    $: realizadosTotalAmount = filteredRealizadosDetails.reduce((acc, pd) => acc + pd.amount, 0);
+
+    $: filteredPendingPayments = pendingPayments.filter((p: PaymentService) => 
+        p && (p.description?.toLowerCase() || '').includes(pendingSearchQuery.toLowerCase())
+    ).filter(s => s) as PaymentService[];
+
+    $: filteredPaidPayments = paymentCompleted.filter((p: PaymentService) => {
+        if (!porRealizarSearchQuery.trim()) return true;
+        const searchTerm = porRealizarSearchQuery.toLowerCase();
+        return p && (p.description?.toLowerCase() || '').includes(searchTerm) ||
+            (p.id?.toLowerCase().includes(searchTerm)) ||
+            (p.amount.toString().toLowerCase().includes(searchTerm));
+    });
+
+
+    async function loadBalanceStore() {
+        if ( $balanceStore.length > 0 ) {
+            return;
+        }
+
+        setIsLoadingBalanceStore( true );
+        const balanceList = await loadSpaceSafes<Balance[]>({ url: '/api/space-safes/balances' });
+
+        if (  balanceList === null ) {
+            setIsLoadingBalanceStore( false );
+            return;
+        }
+
+        setIsLoadingBalanceStore( false );
+
+        setBalances( balanceList );
+    }
+
+
+    async function loadPaymentSerice() {
+        if ( $paymentServiceStore.length > 0 ) {
+            return;
+        }
+
+        setIsLoadingPaymentServiceStore( true );
+        const paymentServiceList = await loadSpaceSafes<PaymentService[]>({ url: '/api/space-safes/payment-services' });
+
+        if (  paymentServiceList === null ) {
+            setIsLoadingPaymentServiceStore( false );
+            return;
+        }
+
+        setIsLoadingPaymentServiceStore( false );
+
+        setPaymentServices( paymentServiceList );
+    }
+
+
+    async function loadPaymentDetailStore() {
+        const paymentDetailByDate =  $paymentDetailStore.filter( pds =>
+            pds.payment.month === currentMonth.getMonth() + 1 &&
+            pds.payment.year === currentMonth.getFullYear()
+        ).length > 0;
+
+        if ( paymentDetailByDate ) {
+            return;
+        }
+
+        setIsLoadingPaymentDetailStore( true );
+
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth() + 1;
+
+        const paymentDetailList = await loadSpaceSafes<PaymentDetail[]>({
+            url: `/api/payment-details/${month}/${year}`
+        });
+
+        if (  paymentDetailList === null ) {
+            setIsLoadingPaymentDetailStore( false );
+            return;
+        }
+
+        setIsLoadingPaymentDetailStore( false );
+
+        addMultiplePaymentDetails( paymentDetailList );
+    }
+
+
+    onMount( async () => {
+        await Promise.all([
+            loadBalanceStore(),
+            loadPaymentSerice(),
+            loadPaymentDetailStore()
+        ]);
+
+        if ( displayedBalances && displayedBalances.length > 0 ) {
+            const firstBalance = displayedBalances[0];
+
+            if ( firstBalance ) { 
+                balanceSelected = firstBalance;
+            }
         }
     });
 
-    // --- Totals (Reactive) ---
-    $: pendingTotal = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
-    $: paidTotal = clientSidePaidPayments.reduce((sum, p) => sum + p.amount, 0);
 
-    // --- Filtered Lists (Reactive) ---
-    $: filteredPendingPayments = pendingPayments.filter(p => 
-        (p.description?.toLowerCase() || '').includes(pendingSearchQuery.toLowerCase())
-    );
-
-    $: filteredPaidPayments = clientSidePaidPayments.filter(p => 
-        (p.description?.toLowerCase() || '').includes(paidSearchQuery.toLowerCase())
-    );
-
-    // --- Lifecycle ---
-    onMount(() => {
-        // Initial load is handled by store subscription
-        // If $paymentServiceStore might be populated async after mount, ensure loadPaymentsForMonth is robust
-        if ($displayedBalances.length > 0) {
-           selectedBalanceForPayment.set($displayedBalances[0]);
-        }
-    });
-
-    // --- Month Navigation ---
-    function changeMonth(increment: number): void {
-        const newDate = new Date(currentMonth);
-        newDate.setDate(1); 
+    async function changeMonth( increment: number ): Promise<void> {
+        const newDate = new Date( currentMonth );
+        newDate.setDate(1);
         newDate.setMonth(newDate.getMonth() + increment);
         currentMonth = newDate;
-        loadPaymentsForMonth(currentMonth);
+        selectedPendingIDs = new Set<string>();
+        selectedPaidIDs = new Set<string>();
+        await loadPaymentDetailStore();
     }
+
 
     function formatMonthYear(date: Date): string {
         return new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date);
     }
 
-    // --- Data Loading & Filtering ---
-    function loadPaymentsForMonth(date: Date): void {
-        const year = date.getFullYear();
-        const month = date.getMonth();
 
-        // Logic to determine if a PaymentService is 'pending' for the currentMonth
-        // This assumes PaymentService has a dueDate or similar and lacks a paidDate or has status 'pending'
-        pendingPayments = allUserPaymentServices.filter(p => {
-            const dueDate = p.expirationDate ? new Date(p.expirationDate) : null; // Use appropriate date field
-            if (!dueDate) return false;
-            // Adjust for UTC if dates are stored in UTC to avoid timezone issues with getMonth/getFullYear
-            const dueYear = dueDate.getUTCFullYear();
-            const dueMonth = dueDate.getUTCMonth();
-            
-            const isCurrentMonth = dueYear === year && dueMonth === month;
-            // Define what makes a payment 'pending' for this month (e.g., not paid yet, or explicit status)
-            // This might involve checking a `p.status` or if `p.paidDate` is null/in the future
-            const isPendingStatus = !p.paidDate; // Example: if it has no paidDate, it's pending for its due month
-            
-            return isCurrentMonth && isPendingStatus;
-        });
-
-        // Logic for 'paid' payments for the currentMonth
-        // These would typically be services that *were* paid *within* this specific month.
-        clientSidePaidPayments = allUserPaymentServices.filter(p => {
-            if (!p.paidDate) return false;
-            const paidDate = new Date(p.paidDate);
-            const paidYear = paidDate.getUTCFullYear();
-            const paidMonth = paidDate.getUTCMonth();
-            return paidYear === year && paidMonth === month && p.balanceId !== undefined; // Has been associated with a balance
-        });
-
-        // Reset selections when month changes
-        selectedPendingIDs.update(s => { s.clear(); return s; });
-        selectedPaidIDs.update(s => { s.clear(); return s; });
-        
-        tick(); // Ensure UI updates after data changes
+    function togglePendingSelection(id: string | undefined): void {
+        if (!id) return;
+        selectedPendingIDs.has(id) ? selectedPendingIDs.delete(id) : selectedPendingIDs.add(id);
+        selectedPendingIDs = new Set([...selectedPendingIDs]);
     }
 
-    // --- Selection Handling ---
-    function togglePendingSelection(id: string): void {
-        selectedPendingIDs.update(set => {
-            set.has(id) ? set.delete(id) : set.add(id);
-            return set;
-        });
+
+    function togglePaidSelection(id: string | undefined): void {
+        if (!id) return;
+        selectedPaidIDs.has(id) ? selectedPaidIDs.delete(id) : selectedPaidIDs.add(id);
+        selectedPaidIDs = new Set([...selectedPaidIDs]);
     }
 
-    function togglePaidSelection(id: string): void {
-        selectedPaidIDs.update(set => {
-            set.has(id) ? set.delete(id) : set.add(id);
-            return set;
-        });
-    }
 
     function handleBalanceSelection(balance: Balance | null): void {
-        selectedBalanceForPayment.set(balance);
+        balanceSelected = balance;
     }
 
-    // --- Core Actions (Implement these with API calls and store updates) ---
+
     async function handleMoveToPaid(): Promise<void> {
-        if ($selectedPendingIDs.size === 0 || !$selectedBalanceForPayment) {
+        if (selectedPendingIDs.size === 0 || !balanceSelected) {
             alert('Seleccione pagos pendientes y un balance.');
             return;
         }
-        const balance = $selectedBalanceForPayment;
-        const paymentsToMove: ClientPaymentService[] = [];
-        
-        pendingPayments = pendingPayments.filter(p => {
-            if ($selectedPendingIDs.has(p.id)) {
-                paymentsToMove.push({...p, balanceId: balance.id, paidDate: new Date().toISOString(), status: 'paid', isSavedToDB: false}); // Mark as paid
-                return false; // Remove from pending
+
+        const servicesToComplete: PaymentService[] = [];
+        let totalAmountToPay = 0;
+
+        pendingPayments.forEach((service: PaymentService) => {
+            if (service && service.id && selectedPendingIDs.has(service.id)) {
+                // Create a new object for paymentCompleted, assigning the selected balance
+                servicesToComplete.push({
+                    ...service,
+                    balance: balanceSelected!, 
+                });
+                totalAmountToPay += service.amount;
             }
-            return true;
         });
 
-        clientSidePaidPayments = [...clientSidePaidPayments, ...paymentsToMove];
-        
-        // Update balance (client-side first)
-        const totalAmountToPay = paymentsToMove.reduce((sum, p) => sum + p.amount, 0);
-        displayedBalances.update(bals => bals.map(bal => 
-            bal.id === balance.id ? { ...bal, currentAmount: bal.currentAmount - totalAmountToPay } : bal
-        ));
+        if ( totalAmountToPay > balanceSelected.balance ) {
+            alert( 'No tienes saldo suficiente, cambia de balance. ');
+            return;
+        }
 
-        selectedPendingIDs.update(s => { s.clear(); return s; });
-        console.log('Moved to paid (client-side):', paymentsToMove);
-        await tick();
+        if ( servicesToComplete.length > 0 ) {
+            paymentCompleted = [...paymentCompleted, ...servicesToComplete];
+            
+            const updatedBal: Balance = {
+                ...balanceSelected,
+                balance: balanceSelected.balance - totalAmountToPay,
+            };
+            updateBalance(updatedBal);
+            selectedPendingIDs = new Set<string>();
+        }
+
     }
 
     async function handleMoveToPending(): Promise<void> {
-        if ($selectedPaidIDs.size === 0) {
+        if (selectedPaidIDs.size === 0) {
             alert('Seleccione pagos realizados para mover a pendientes.');
             return;
         }
-        const paymentsToRevert: ClientPaymentService[] = [];
-        const balanceUpdates: { balanceId: string; amount: number }[] = [];
 
-        clientSidePaidPayments = clientSidePaidPayments.filter(p => {
-            if ($selectedPaidIDs.has(p.id)) {
-                if (p.balanceId) {
-                    balanceUpdates.push({ balanceId: p.balanceId, amount: p.amount });
+        const updatedTemporarilyCompleted: PaymentService[] = [];
+        const balanceRestorationMap = new Map<string, { amountToRestore: number, balanceData: Balance }>();
+
+        paymentCompleted.forEach(service => {
+            if (service && service.id && selectedPaidIDs.has(service.id)) {
+                // This service is being moved back to pending
+                if (service.balance && service.balance.id) {
+                    const mapEntry = balanceRestorationMap.get(service.balance.id);
+                    const currentAmount = mapEntry ? mapEntry.amountToRestore : 0;
+                    balanceRestorationMap.set(service.balance.id, {
+                        amountToRestore: currentAmount + service.amount,
+                        balanceData: service.balance // Storing the balance object associated at time of payment
+                    });
                 }
-                // Remove balanceId and paidDate, effectively making it pending for its due month
-                // The status field might not be strictly necessary if paidDate is the source of truth for paid status
-                paymentsToRevert.push({...p, balanceId: undefined, paidDate: undefined, status: 'pending', isSavedToDB: false }); 
-                return false; // Remove from client-side paid
+            } else {
+                updatedTemporarilyCompleted.push(service); // Keep in paymentCompleted
             }
-            return true;
         });
 
-        // Add to pending only if they belong to the current displayed month
-        // Or, more robustly, let loadPaymentsForMonth re-filter them from allUserPaymentServices after backend update
-        // For now, let's add them to pendingPayments directly if they fit the current month's criteria.
-        const currentMonthDate = new Date(currentMonth);
-        const currentYear = currentMonthDate.getFullYear();
-        const currentM = currentMonthDate.getMonth();
+        paymentCompleted = updatedTemporarilyCompleted;
+        console.log('🚀 ~ file: PaymentsBoard.svelte:270 ~ updatedTemporarilyCompleted:', updatedTemporarilyCompleted)
 
-        paymentsToRevert.forEach(pTR => {
-            const dueDate = pTR.expirationDate ? new Date(pTR.expirationDate) : null;
-            if (dueDate && dueDate.getUTCFullYear() === currentYear && dueDate.getUTCMonth() === currentM) {
-                pendingPayments = [...pendingPayments, pTR];
-            }
-            // If not for current month, they will be picked up when user navigates to their respective month,
-            // assuming allUserPaymentServices is updated after API call.
-        });
-        pendingPayments.sort((a, b) => (new Date(a.expirationDate || 0)).getTime() - (new Date(b.expirationDate || 0)).getTime());
+        balanceRestorationMap.forEach(data => {
+            const storeBalance = ($balanceStore || []).find(b => b.id === data.balanceData.id);
+            const balanceToUpdate = storeBalance || data.balanceData; // Prefer store's current state
 
-        // Update balances
-        displayedBalances.update(bals => {
-            const newBalances = bals.map(bal => {
-                const relevantUpdate = balanceUpdates.find(upd => upd.balanceId === bal.id);
-                if (relevantUpdate) {
-                    return { ...bal, currentAmount: bal.currentAmount + relevantUpdate.amount };
-                }
-                return bal;
-            });
-            return newBalances;
+            const updatedBal: Balance = {
+                ...balanceToUpdate,
+                balance: balanceToUpdate.balance + data.amountToRestore,
+            };
+            updateBalance(updatedBal);
         });
-        
-        selectedPaidIDs.update(s => { s.clear(); return s; });
-        console.log('Moved to pending (client-side):', paymentsToRevert);
-        await tick(); 
-        // TODO: API Call - update payment status on backend for each reverted payment.
-        // This should ideally update allUserPaymentServices via paymentServiceStore, triggering a reactive reload.
-        // For example: await paymentService.markAsPending(paymentsToRevert.map(p => p.id));
-        // After successful API call, paymentServiceStore should be updated.
+
+        selectedPaidIDs = new Set<string>();
     }
 
-    async function handleSavePaidPayments(): Promise<void> {
-        const paymentsToSave = clientSidePaidPayments.filter(p=>!p.isSavedToDB); // Example: Add a flag like isSavedToDB
-        if (paymentsToSave.length === 0) {
-            alert('No hay nuevos pagos realizados para guardar en la base de datos.');
+
+    function formatCurrency(value: number, currencyCode: string = 'USD'): string {
+        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: currencyCode, minimumFractionDigits: 2 }).format(value);
+    }
+
+
+
+    function transformPaymentList(paymentList: PaymentService[]): {
+        month: number;
+        year: number;
+        paymentDetails: {
+            amount: number;
+            balanceId: string;
+            paymentServiceId: string;
+        }[];
+    } {
+        const paymentDetails = paymentList.map(payment => ({
+            amount              : payment.amount,
+            balanceId           : payment.balance!.id!,
+            paymentServiceId    : payment.id,
+        }));
+
+        return {
+            month: currentMonth.getMonth() + 1,
+            year: currentMonth.getFullYear(),
+            paymentDetails,
+        };
+    }
+
+
+    async function savePayment() {
+        if (paymentCompleted.length === 0) {
+            alert("No hay pagos marcados como realizados para registrar.");
             return;
         }
-        console.log('Guardando en BD (simulado):', paymentsToSave);
-        // TODO: API Call to save each payment in paymentsToSave
-        // For each payment:
-        //   - Call your API (e.g., updatePaymentService(payment.id, { status: 'paid', paidDate: payment.paidDate, balanceId: payment.balanceId }))
-        //   - On success, update paymentServiceStore if needed, or mark clientSidePaidPayment as 'isSavedToDB = true'
-        //   - Handle API errors
-        alert('Simulación: Pagos guardados en BD. Implementar API real.');
-        // Example: clientSidePaidPayments.forEach(p => p.isSavedToDB = true); clientSidePaidPayments = [...clientSidePaidPayments];
+        console.log('🚀 ~ file: PaymentsBoard.svelte:225 ~ paymentCompleted:', paymentCompleted)
+
+        const transformedPaymentList = transformPaymentList(paymentCompleted);
+        console.log('🚀 ~ file: PaymentsBoard.svelte:226 ~ transformedPaymentList:', transformedPaymentList)
+
+
+        const savedPaymentDetail = await loadSpaceSafes<PaymentDetail[]>({
+            url: `/api/space-safes/payment-details`,
+            method: 'POST',
+            data: transformedPaymentList
+        });
+        
+        console.log('🚀 ~ file: PaymentsBoard.svelte:318 ~ savedPaymentDetail:', savedPaymentDetail)
+
+        if ( !savedPaymentDetail ) {
+            // TODO: Show toast error
+            return;
+        }
+
+        addMultiplePaymentDetails( savedPaymentDetail );
+
+        paymentCompleted = [];
+        selectedPaidIDs = new Set<string>();
+        selectedPendingIDs = new Set<string>();
     }
 
-    // --- Formatting Utilities ---
-    function formatCurrency(amount: number, currency = 'EUR'): string {
-        return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(amount);
+
+    function handleMoveAllToPaid(): void {
+        if (!balanceSelected) {
+            alert('Por favor, seleccione un balance primero.');
+            return;
+        }
+        if (pendingPayments.length === 0) {
+            alert('No hay pagos pendientes para mover.');
+            return;
+        }
+
+        const amountToMove = pendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+        if (balanceSelected.balance < amountToMove) {
+            alert('El balance seleccionado no tiene fondos suficientes.');
+            return; 
+        }
+
+        const newBalanceAmount = balanceSelected.balance - amountToMove;
+        
+        paymentCompleted = [...paymentCompleted, ...pendingPayments];
+
+        const updatedBalanceData = { ...balanceSelected, balance: newBalanceAmount };
+        updateBalance(updatedBalanceData);
+        balanceSelected = updatedBalanceData;
     }
 
-    // --- Mock Payment Card (Replace with your actual PaymentCard.svelte component) ---
-    // This is a simplified stand-in for demonstration.
-    // Your PaymentCard should emit a 'toggle' event or accept selection state via prop.
+    function handleMoveAllToPendingFromPorRealizar(): void {
+        if (!balanceSelected) {
+            alert('Por favor, seleccione un balance primero (para devolver el monto).');
+            return;
+        }
+        if (paymentCompleted.length === 0) {
+            alert('No hay pagos en "Por Realizar" para mover.');
+            return;
+        }
 
+        const amountToReturn = paymentCompleted.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const newBalanceAmount = balanceSelected.balance + amountToReturn;
 
+        paymentCompleted = []; 
+
+        const updatedBalanceData = { ...balanceSelected, balance: newBalanceAmount };
+        updateBalance(updatedBalanceData);
+        balanceSelected = updatedBalanceData;
+    }
 </script>
 
-<div class="p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-800 min-h-screen text-gray-800 dark:text-gray-200">
-    <!-- Balances Display Section -->
-    <section aria-labelledby="balances-title">
-        <h2 id="balances-title" class="text-xl font-semibold mb-3">Mis Balances</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-            {#each $displayedBalances as balance (balance.id)}
-                <BalanceCard 
-                    {balance} 
-                    isSelected={$selectedBalanceForPayment?.id === balance.id} 
-                    on:select={(event) => handleBalanceSelection(event.detail)} 
-                />
-            {:else}
-                <p class="col-span-full text-center text-gray-500 dark:text-gray-400 py-4">No hay balances para mostrar.</p>
-            {/each}
-        </div>
-    </section>
-
+<div class="space-y-6 min-h-screen">
     <!-- Month Navigation & Title -->
-    <header class="flex flex-col sm:flex-row justify-between items-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 mb-6">
+    <header class="flex flex-col sm:flex-row justify-between items-center p-4 bg-white dark:bg-primary-800 rounded-lg shadow border border-primary-200 dark:border-primary-700 mb-6">
         <h1 class="text-2xl font-bold mb-2 sm:mb-0">Gestión de Pagos Mensuales</h1>
         <div class="flex items-center space-x-2">
-            <button on:click={() => changeMonth(-1)} class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-primary-600 dark:text-primary-400" aria-label="Mes anterior">
+            <button on:click={() => changeMonth(-1)} class="p-2 rounded-md hover:bg-primary-100 dark:hover:bg-primary-700">
                 &lt; Anterior
             </button>
-            <h2 class="text-lg font-semibold tabular-nums w-40 text-center">{formatMonthYear(currentMonth)}</h2>
-            <button on:click={() => changeMonth(1)} class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-primary-600 dark:text-primary-400" aria-label="Mes siguiente">
+            <span class="font-semibold text-lg">{formatMonthYear(currentMonth)}</span>
+            <button on:click={() => changeMonth(1)} class="p-2 rounded-md hover:bg-primary-100 dark:hover:bg-primary-700">
                 Siguiente &gt;
             </button>
         </div>
     </header>
 
-    <!-- Main Content: Pending and Paid Columns -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Balances Section -->
+    <section aria-labelledby="balances-title" class="mb-6">
+        <h2 id="balances-title" class="text-xl font-semibold mb-3">
+            Mis Balances ({displayedBalances ? displayedBalances.length : 0})
+        </h2>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
+            {#each displayedBalances as balance (balance.id)}
+                <BalanceCard
+                    {balance}
+                    isSelected={balanceSelected?.id === balance.id}
+                    onClick={() => handleBalanceSelection(balance)}
+                />
+            {:else}
+                <p class="text-primary-500 dark:text-primary-400">No hay balances disponibles. Agrega uno para empezar.</p>
+            {/each}
+        </div>
+    </section>
+
+    <!-- Payments Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Pending Payments Column -->
-        <section aria-labelledby="pending-payments-title" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 id="pending-payments-title" class="text-lg font-semibold">Pendientes ({filteredPendingPayments.length})</h3>
-                <p class="font-semibold text-orange-500 dark:text-orange-400">Total: {formatCurrency(pendingTotal)}</p>
+        <section
+            aria-labelledby="pending-payments-title"
+            class="animate-slide-up relative h-[calc(100vh-320px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+        >
+            <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0 pointer-events-none">
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
+                <PatternBackground patternId="balanceGrid-pending" />
             </div>
-            <Input type="search" placeholder="Buscar en pendientes..." bind:value={pendingSearchQuery} label="Filtrar pendientes" id="pendingSearch" />
-            
-            <div class="flex-grow min-h-[300px] max-h-[45vh] overflow-y-auto space-y-2 p-1 border dark:border-gray-700 rounded-md">
+
+            <div class="flex justify-between items-center">
+                <h3 id="pending-payments-title" class="text-lg font-semibold text-orange-500 dark:text-orange-400">
+                    Pendientes ({ filteredPendingPayments ? filteredPendingPayments.length : 0 })
+                </h3>
+
+                <p class="font-semibold text-orange-500 dark:text-orange-400">
+                    Total: { formatCurrency( pendingTotal )}
+                </p>
+            </div>
+
+            <Input
+                type="search"
+                placeholder="Buscar en pendientes..."
+                bind:value={pendingSearchQuery}
+            />
+
+            <div class="flex-grow overflow-y-auto space-y-3 pr-1">
                 {#each filteredPendingPayments as payment (payment.id)}
                     <PaymentCard 
-                        {payment } 
-                        isSelected={$selectedPendingIDs.has(payment.id)} 
-                        on:toggleSelect={(event) => togglePendingSelection(event.detail.id)} 
+                        paymentService={payment} 
+                        isSelected={selectedPendingIDs.has(payment.id)} 
+                        handleClick={() => togglePendingSelection(payment.id)}
+                        type="pending"
                     />
                 {:else}
-                    <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-10">No hay pagos pendientes para este mes o filtro.</p>
+                    <p class="text-center text-primary-500 dark:text-primary-400 py-4">No hay pagos pendientes para este mes o según tu búsqueda.</p>
                 {/each}
             </div>
 
-            {#if pendingPayments.length > 0}
-                <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                    <select bind:value={$selectedBalanceForPayment} 
-                            class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
-                        <option value={null} disabled>Seleccione un balance...</option>
-                        {#each $displayedBalances as balance (balance.id)}
-                            <option value={balance}>{balance.name} ({formatCurrency(balance.currentAmount, balance.currency)})</option>
-                        {/each}
-                    </select>
-                    <button on:click={handleMoveToPaid} 
-                            class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={$selectedPendingIDs.size === 0 || !$selectedBalanceForPayment}>
-                        Marcar como Pagado &rarr;
-                    </button>
-                </div>
-            {/if}
+            <button 
+                on:click={handleMoveToPaid} 
+                disabled={selectedPendingIDs.size === 0 || !balanceSelected}
+                class="mt-auto w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Marcar como Pagado ({selectedPendingIDs.size})
+            </button>
+            <!-- New button for Mover Todos a Por Realizar -->
+            <button
+                on:click={handleMoveAllToPaid}
+                disabled={pendingPayments.length === 0 || !balanceSelected}
+                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Mover Todos a Por Realizar ({pendingPayments.length})
+            </button>
         </section>
 
-        <!-- Paid Payments Column -->
-        <section aria-labelledby="paid-payments-title" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 id="paid-payments-title" class="text-lg font-semibold">Realizados ({filteredPaidPayments.length})</h3>
-                <p class="font-semibold text-green-600 dark:text-green-400">Total: {formatCurrency(paidTotal)}</p>
+        <!-- Pagos por realizar -->
+        <section
+            aria-labelledby="paid-payments-title"
+            class="animate-slide-up relative h-[calc(100vh-320px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+        >
+            <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0 pointer-events-none">
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
+                <PatternBackground patternId="balanceGrid-pending" />
             </div>
-            <Input type="search" placeholder="Buscar en realizados..." bind:value={paidSearchQuery} label="Filtrar realizados" id="paidSearch" />
 
-            <div class="flex-grow min-h-[300px] max-h-[45vh] overflow-y-auto space-y-2 p-1 border dark:border-gray-700 rounded-md">
+            <div class="flex justify-between items-center">
+                <h3 id="paid-payments-title" class="text-lg font-semibold text-green-500 dark:text-green-400">
+                    Por Realizar ({ filteredPaidPayments ? filteredPaidPayments.length : 0 })
+                </h3>
+
+                <p class="font-semibold text-green-500 dark:text-green-400">
+                    Total: {formatCurrency(paidTotal)}
+                </p>
+            </div>
+
+            <Input
+                type="search"
+                placeholder="Buscar en por realizar..."
+                bind:value={porRealizarSearchQuery}
+            />
+
+            <div class="flex-grow overflow-y-auto space-y-3 pr-1">
                 {#each filteredPaidPayments as payment (payment.id)}
                     <PaymentCard 
-                        {payment} 
-                        isSelected={$selectedPaidIDs.has(payment.id)} 
-                        on:toggleSelect={(event) => togglePaidSelection(event.detail.id)} 
+                        paymentService={payment} 
+                        isSelected={selectedPaidIDs.has(payment.id)} 
+                        handleClick={() => togglePaidSelection(payment.id)}
+                        type="pending"
                     />
                 {:else}
-                    <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-10">No hay pagos realizados para este mes o filtro.</p>
+                    <p class="text-center text-primary-500 dark:text-primary-400 py-4">No hay pagos realizados para este mes o según tu búsqueda.</p>
                 {/each}
             </div>
 
-            <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                 <button on:click={handleMoveToPending} 
-                        class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={$selectedPaidIDs.size === 0}>
-                    &larr; Mover a Pendientes
-                </button>
-                <button on:click={handleSavePaidPayments} 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={clientSidePaidPayments.filter(p=>!p.isSavedToDB).length === 0 && $selectedPaidIDs.size === 0}>
-                    Guardar Cambios en BD
-                </button>
+            <button 
+                on:click={handleMoveToPending} 
+                disabled={selectedPaidIDs.size === 0 || !balanceSelected} 
+                class="mt-auto w-full bg-primary-400 hover:bg-primary-500 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                Mover a Pendientes ({selectedPaidIDs.size})
+            </button>
+            <!-- New button for Mover Todos a Pendientes -->
+            <button
+                on:click={handleMoveAllToPendingFromPorRealizar}
+                disabled={paymentCompleted.length === 0 || !balanceSelected}
+                class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Mover Todos a Pendientes ({paymentCompleted.length})
+            </button>
+            <button 
+                on:click={savePayment}
+                disabled={paymentCompleted.length === 0}
+                class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                Registrar Pagos
+            </button>
+        </section>
+
+        <!-- Pagos realizados -->
+        <section
+            aria-labelledby="realizados-payments-title"
+            class="animate-slide-up relative h-[calc(100vh-320px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+        >
+            <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0 pointer-events-none">
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
+                <PatternBackground patternId="balanceGrid-done" />
             </div>
+
+            <div class="flex justify-between items-center">
+                <h3 id="realizados-payments-title" class="text-lg font-semibold text-primary-500 dark:text-primary-400">
+                    Realizados ({ filteredRealizadosDetails.length })
+                </h3>
+
+                <p class="font-semibold text-primary-500 dark:text-primary-400">
+                    Total: {formatCurrency(realizadosTotalAmount)}
+                </p>
+            </div>
+
+            <Input
+                type="search"
+                placeholder="Buscar en realizados..."
+                bind:value={paidSearchQuery}
+            />
+
+            {#each filteredRealizadosDetails as paymentDetail (paymentDetail.id)}
+                <PaymentDetailCard {paymentDetail} />
+            {:else}
+                <p class="text-center text-primary-500 dark:text-primary-400 py-4">No hay pagos registrados o que coincidan con tu búsqueda.</p>
+            {/each}
         </section>
     </div>
 </div>
