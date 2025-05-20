@@ -4,6 +4,8 @@
         id?      : string;
         name?    : string;
         checked? : boolean | undefined;
+        padding? : string   | undefined;
+        onChange?: () => void;
     }
 
     let {
@@ -11,6 +13,8 @@
         id       = "switch",
         name     = "switch",
         checked  = $bindable<boolean | undefined>(),
+        padding  = "py-2",
+        onChange = () => {},
     }: Props = $props();
 
     if (checked === undefined) {
@@ -19,11 +23,12 @@
     
     function toggle() {
         checked = !checked;
+        onChange();
     }
 </script>
 
-<div class="flex items-center justify-between gap-4 py-2">
-    <label for={id} class="text-sm font-medium text-primary-200">
+<div class="flex items-center justify-between gap-4 {padding}">
+    <label for={id} class="text-sm font-medium text-primary-800 dark:text-primary-200">
         {label}
     </label>
 
