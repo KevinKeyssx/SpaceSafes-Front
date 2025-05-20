@@ -31,14 +31,14 @@
 
 <div class="flex flex-col gap-2 w-full">
     {#if label}
-        <label for={id} class="text-sm font-medium text-primary-200">{label}</label>
+        <label for={id} class="text-sm font-medium text-primary-800 dark:text-primary-200">{label}</label>
     {/if}
 
     <input
         bind:value={ value }
         type            = { type }
         placeholder     = { placeholder }
-        class           = "disabled:opacity-50 h-10 w-full px-4 py-2 bg-primary-800/50 border-none ring-1 ring-primary-400 hover:ring-primary-500 focus:ring-2 rounded-xl focus:outline-none text-primary-300 placeholder-primary-300 transition-all duration-300 backdrop-blur-sm shadow-sm {type === 'number' ? 'number-input-custom' : ''}"
+        class           = "disabled:opacity-50 h-10 w-full px-4 py-2 border-none ring-1 focus:ring-2 rounded-xl focus:outline-none transition-all duration-300 backdrop-blur-sm shadow-sm bg-primary-50 text-primary-800 placeholder-primary-500 ring-primary-300 hover:ring-primary-400 focus:ring-primary-500 dark:bg-primary-800 dark:text-primary-300 dark:placeholder-primary-300 dark:ring-primary-400 dark:hover:ring-primary-500 dark:focus:ring-primary-500 {type === 'number' ? 'number-input-custom' : ''}"
         data-section    = { id }
         id              = { id }
         name            = { name }
