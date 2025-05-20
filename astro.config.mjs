@@ -1,11 +1,15 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import svelte from '@astrojs/svelte';
-import node from "@astrojs/node";
 import clerk from "@clerk/astro";
 import { esES } from "@clerk/localizations";
+import vercel from "@astrojs/vercel";
 
 export default defineConfig({
+    output: "server",
+    site: 'https://space-safes-front.vercel.app',
+    compressHTML: true,
+    prefetch: true,
     integrations: [
         tailwind(),
         svelte(),
@@ -13,6 +17,13 @@ export default defineConfig({
             localization: esES
         })
     ],
-    adapter: node({ mode: "standalone" }),
-    output: "server",
+    adapter: vercel(),
+    devToolbar: {
+        enabled: false
+    },
+    vite: {
+        ssr: {
+            noExternal: ["path-to-regexp"],
+        },
+    },
 });
