@@ -5,10 +5,11 @@
 
     // Props
     export let links: Link[] = [];
+    export let searchTerm: string = '';
+    export let categoryFilter: string = '';
+    export let showOnlyFavorites: boolean = false;
 
     // Estado
-    let searchTerm = '';
-    let categoryFilter = '';
     let selectedLink: Link | null = null;
 
     // Manejar selección de link
@@ -16,49 +17,28 @@
         selectedLink = link;
     }
 
-  // Extraer categorías únicas para el filtro
-    $: categories = [...new Set(links.map(link => link.category))];
 
-  // Filtrar links por búsqueda y categoría
+  // Filtrar links por búsqueda, categoría y favoritos
     $: filteredLinks = links.filter(link => {
-        const matchesSearch = searchTerm === '' || 
-            (link.name && link.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (link.url && link.url.toLowerCase().includes(searchTerm.toLowerCase()));
+        // Favoritos
+        const favoriteMatch = !showOnlyFavorites || link.isFavorite;
+        if (!favoriteMatch) return false;
+
+        // Categoría
+        const categoryMatch = !categoryFilter || !link.category || link.category.toLowerCase() === categoryFilter.toLowerCase();
+        if (!categoryMatch) return false;
+
+        // Término de búsqueda (nombre o URL)
+        const term = searchTerm.toLowerCase().trim();
+        const nameMatch = link.name && link.name.toLowerCase().includes(term);
+        const urlMatch = link.url && link.url.toLowerCase().includes(term);
+        const searchMatch = !term || nameMatch || urlMatch;
         
-        const matchesCategory = categoryFilter === '' || link.category === categoryFilter;
-        
-        return matchesSearch && matchesCategory;
+        return searchMatch; // Si llega hasta aquí, todas las condiciones previas se cumplieron
     });
 </script>
 
 <div class="flex flex-col">
-        <div class="flex flex-col sm:flex-row gap-4 mb-6">
-            <div class="relative flex-grow">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-                <input
-                    type="text"
-                    placeholder="Buscar links..."
-                    class="w-full pl-10 pr-4 py-2 bg-primary-50/50 dark:bg-primary-800/50 border border-primary-200/50 dark:border-primary-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 text-primary-900 dark:text-primary-100"
-                    bind:value={searchTerm}
-                    aria-label="Buscar enlaces"
-                />
-            </div>
-            <select
-                class="px-4 py-2 bg-primary-50/50 dark:bg-primary-800/50 border border-primary-200/50 dark:border-primary-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 text-primary-900 dark:text-primary-100"
-                bind:value={categoryFilter}
-                aria-label="Filtrar por categoría"
-            >
-                <option value="">Todas las categorías</option>
-                {#each categories as category, index}
-                    <option value={category}>{category}</option>
-                {/each}
-            </select>
-        </div>
-
         <div class="flex gap-3">
             <div class="w-[calc(100%-400px)]">
 
