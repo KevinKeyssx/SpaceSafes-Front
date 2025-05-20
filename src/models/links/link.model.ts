@@ -30,7 +30,7 @@ export type Account = {
 
 export type Link = {
     id              : string;
-    name            : string | null;
+    name            : string;
     avatar          : string | null;
     description     : string | null;
     url             : string;
