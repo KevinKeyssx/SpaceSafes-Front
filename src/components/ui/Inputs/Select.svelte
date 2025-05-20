@@ -1,62 +1,39 @@
 <script lang="ts">
     import { Select } from "bits-ui";
+    
 
     import Check            from "phosphor-svelte/lib/Check";
     import CaretUpDown      from "phosphor-svelte/lib/CaretUpDown";
     import CaretDoubleUp    from "phosphor-svelte/lib/CaretDoubleUp";
     import CaretDoubleDown  from "phosphor-svelte/lib/CaretDoubleDown";
 
-    type SelectOption = {
-        value: string;
-        label: string;
-        disabled?: boolean;
-    };
+    export let id: string = "";
+    export let name: string = "";
+    export let value: string = ""; // Changed default to null for clarity
+    export let label: string = "";
+    export let placeholder: string = "Select an option";
+    export let options: { value: string; label: string; disabled?: boolean }[] = [];
+    export let required: boolean = false;
+    export let disabled: boolean = false;
+    export let icon: any = undefined;
+    export let onValueChange: (value: string | undefined) => void = () => {};
+    // Removed onChange prop, using Svelte's event dispatching instead for two-way binding
 
-    type Props = {
-        id?             : string;
-        name?           : string;
-        value?          : string;
-        label?          : string;
-        placeholder?    : string;
-        options?        : SelectOption[];
-        required?       : boolean;
-        disabled?       : boolean;
-        onChange?       : (value: string) => void;
-        icon?           : any;
-    }
 
-    let {
-        id          = "",
-        name        = "",
-        value       = $bindable<string>(""), // Default to empty string to avoid undefined binding issues
-        label       = "",
-        placeholder = "Select an option",
-        options     = [],
-        required    = false,
-        disabled    = false,
-        onChange    = undefined,
-        icon        = undefined,
-    }: Props = $props();
+    let selectedLabel: string | undefined;
+    $: selectedLabel = value
+        ? options.find((option) => option.value === value)?.label
+        : placeholder;
 
-    const selectedLabel = $derived(
-        value
-            ? options.find((option) => option.value === value)?.label
-            : placeholder
-    );
-
-    function handleValueChange(newValue: string) {
-        value = newValue;
-        if (onChange) {
-            onChange(newValue);
-        }
-    }
+    // bits-ui onValueChange prop expects a callback of type (value: string | undefined) => void
+    
 </script>
 
 <div class="flex flex-col gap-2 w-full">
     {#if label}
         <label for={id} class="text-sm font-medium text-primary-200">{label}</label>
     {/if}
-    <Select.Root type="single" onValueChange={handleValueChange} items={options}>
+    <Select.Root type="single" bind:value={value} onValueChange={onValueChange} items={options} {disabled} {required}>
         <Select.Trigger
             class="disabled:opacity-50 h-10 w-full px-4 py-2 bg-primary-800/50 border-none ring-1 ring-primary-400 hover:ring-primary-500 focus:ring-2 rounded-xl focus:outline-none text-primary-300 flex items-center transition-all duration-300 backdrop-blur-sm shadow-sm"
             aria-label={placeholder}
