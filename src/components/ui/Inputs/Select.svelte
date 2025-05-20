@@ -1,11 +1,12 @@
 <script lang="ts">
     import { Select } from "bits-ui";
-    
 
-    import Check            from "phosphor-svelte/lib/Check";
-    import CaretUpDown      from "phosphor-svelte/lib/CaretUpDown";
-    import CaretDoubleUp    from "phosphor-svelte/lib/CaretDoubleUp";
-    import CaretDoubleDown  from "phosphor-svelte/lib/CaretDoubleDown";
+    import {
+        Check,
+        CaretUpDown,
+        CaretDoubleUp,
+        CaretDoubleDown
+    } from "phosphor-svelte";
 
     export let id: string = "";
     export let name: string = "";
