@@ -28,7 +28,7 @@
 >
     <button
         on:click={() => handleAccountClick(account)}
-        class="w-full relative overflow-hidden border-0 bg-gradient-to-br bg-primary-50 dark:from-primary-700 dark:via-primary-800 dark:to-primary-900 flex flex-col p-6 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-2xl group animate-slide-up backdrop-blur-lg {
+        class="w-full relative overflow-hidden border-0 bg-gradient-to-br bg-primary-50 dark:from-primary-700 dark:via-primary-800 dark:to-primary-900 flex flex-col p-4 sm:p-6 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-2xl group animate-slide-up backdrop-blur-lg {
             selectedAccountId === account.id
             ? 'ring-2 ring-primary-300 shadow-lg shadow-primary-500/20'
             : 'hover:scale-[1.01] hover:shadow-xl hover:shadow-primary-500/10'
