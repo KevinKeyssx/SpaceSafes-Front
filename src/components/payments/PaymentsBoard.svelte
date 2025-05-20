@@ -482,13 +482,13 @@
         </h2>
 
         {#if $isLoadingBalanceStore}
-        <div class="animate-slide-up grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
+        <div class="animate-slide-up grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
             {#each [1,2,3,4,5,6,7,8,9,10] }
                 <BalanceCardLoading />
             {/each}
         </div>
         {:else}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
                 {#each displayedBalances as balance (balance.id)}
                     <BalanceCard
                         {balance}
@@ -501,11 +501,11 @@
     </section>
 
     <!-- Payments Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <!-- Pending Payments Column -->
         <section
             aria-labelledby="pending-payments-title"
-            class="animate-slide-up relative h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+            class="animate-slide-up relative h-[500px] lg:h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
         >
             <PatternBackground patternId="balanceGrid-pending" />
 
@@ -519,7 +519,7 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-[1fr_auto] gap-2">
+            <div class="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto] gap-2">
                 <Input
                     type="search"
                     placeholder="Buscar en pendientes..."
@@ -529,7 +529,7 @@
                 <button
                     on:click={handleMoveAllToPaid}
                     disabled={pendingPayments.length === 0 || !balanceSelected}
-                    class="flex items-center gap-0 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex items-center justify-center gap-0 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Marcar todos como pagados"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="10" stroke-dashoffset="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12l-5 -5M15 12l-5 5"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="10;0"/></path></svg>
@@ -568,7 +568,7 @@
         <!-- Pagos por realizar -->
         <section
             aria-labelledby="paid-payments-title"
-            class="animate-slide-up relative h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+            class="animate-slide-up relative h-[500px] lg:h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
         >
             <PatternBackground patternId="balanceGrid-pending" />
 
@@ -582,11 +582,11 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-[0.1fr_1fr_auto] gap-2">
+            <div class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr] gap-2">
                 <button
                     on:click={handleMoveAllToPendingSearchFromTPerform}
                     disabled={paymentCompleted.length === 0 || !balanceSelected}
-                    class="flex items-center gap-0 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex items-center justify-center gap-0 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Marcar todos como realizados"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="10" stroke-dashoffset="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l5 -5M9 12l5 5"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="10;0"/></path></svg>
@@ -612,18 +612,20 @@
                 {/each}
             </div>
 
-            <button 
-                on:click={handleMoveToPending} 
-                disabled={selectedPaidIDs.size === 0 || !balanceSelected} 
-                class="mt-auto w-full bg-primary-400 hover:bg-primary-500 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
-                Mover a Pendientes ({selectedPaidIDs.size})
-            </button>
+            <div class="mt-auto space-y-2">
+                <button 
+                    on:click={handleMoveToPending} 
+                    disabled={selectedPaidIDs.size === 0 || !balanceSelected} 
+                    class="w-full bg-primary-400 hover:bg-primary-500 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                    Mover a Pendientes ({selectedPaidIDs.size})
+                </button>
 
-            <button 
-                on:click={savePayment}
-                disabled={paymentCompleted.length === 0 || isLoadingSavePayment}
-                class="flex items-center gap-2 justify-center w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+                <button 
+                    on:click={savePayment}
+                    disabled={paymentCompleted.length === 0 || isLoadingSavePayment}
+                    class="flex items-center gap-2 justify-center w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+            
                 {#if isLoadingSavePayment}
                     <LoadIcon />
                 {:else}
@@ -631,13 +633,14 @@
                 {/if}
 
                 Registrar Pagos
-            </button>
+                </button>
+            </div>
         </section>
 
         <!-- Pagos realizados -->
         <section
             aria-labelledby="realizados-payments-title"
-            class="animate-slide-up relative h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+            class="animate-slide-up relative h-[500px] lg:h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
         >
             <PatternBackground patternId="balanceGrid-pending" />
 

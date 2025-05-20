@@ -38,10 +38,9 @@
     });
 </script>
 
-<div class="flex flex-col">
-        <div class="flex gap-3">
-            <div class="w-[calc(100%-400px)]">
-
+<div class="flex flex-col lg:flex-row gap-4">
+    <!-- Lista de enlaces (responsiva) -->
+    <div class="w-full lg:w-3/4">
         <!-- Lista de enlaces -->
         {#if filteredLinks.length === 0}
             <div class="p-8 text-center bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50">
@@ -58,8 +57,8 @@
                 </p>
             </div>
         {:else}
-            <!-- Grid de tarjetas con número fijo de columnas -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <!-- Grid de tarjetas responsivo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {#each filteredLinks as link (link.id)}
                     <div 
                         on:click={() => handleSelectLink(link)}
@@ -74,9 +73,10 @@
                 {/each}
             </div>
         {/if}
-</div>
-    <div class="w-[400px] flex-shrink-0">
+    </div>
+    
+    <!-- Panel de detalles (fijo en scroll) -->
+    <div class="w-full lg:w-[70%] xl:w-[30%] 2xl:w-[25%] md:sticky md:top-20 md:self-start">
         <LinkDetail selectedLink={selectedLink} />
     </div>
-</div>
 </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { PaymentService } from '@/models/payment-services/payment-service.model';
-    import { formatCurrency, formatDate } from '@/lib/utils/currencyUtils';
+    import { formatCurrency } from '@/lib/utils/currencyUtils';
     import GlowEffects from '../ui/GlowEffects.svelte';
     import { fade } from 'svelte/transition';
 

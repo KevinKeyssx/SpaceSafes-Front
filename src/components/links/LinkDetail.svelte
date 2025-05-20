@@ -84,7 +84,7 @@
 </script>
 
 {#if !selectedLink}
-    <div class="flex items-center justify-center p-6 bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 h-[400px]">
+    <div class="flex items-center justify-center p-6 bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 h-full overflow-hidden ">
         <PatternBackground patternId="balanceGrid-pending" />
 
         <p class="text-primary-600 dark:text-primary-300 text-center">
@@ -93,7 +93,7 @@
     </div>
 {:else}
     <div
-        class="relative bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 transition-all duration-300 {isVisible ? 'opacity-100' : 'opacity-0'} sticky top-4 max-h-[calc(100vh-120px)] overflow-hidden"
+        class="relative bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 transition-all duration-300 {isVisible ? 'opacity-100' : 'opacity-0'} overflow-hidden"
         transition:fade={{ duration: 300 }}
     >
         <PatternBackground patternId="linkdetail" />

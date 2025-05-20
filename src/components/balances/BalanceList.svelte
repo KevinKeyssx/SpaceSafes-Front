@@ -43,9 +43,9 @@
     });
 </script>
 
-<div class="flex flex-col lg:flex-row gap-6">
-    <div class="lg:flex-1">
-        
+<div class="flex flex-col lg:flex-row gap-4">
+    <!-- Lista de balances (responsiva) -->
+    <div class="w-full lg:w-3/4">
         <!-- Resultados o mensaje de no resultados -->
         {#if filteredBalances.length === 0}
             <div 
@@ -66,7 +66,7 @@
                 {/if}
             </div>
         {:else}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {#each filteredBalances as balance (balance.id)}
                     <div 
                         role="button" 
@@ -82,7 +82,8 @@
         {/if}
     </div>
     
-    <div class="lg:w-96">
+    <!-- Panel de detalles (fijo en scroll) -->
+    <div class="w-full lg:w-[70%] xl:w-[30%] 2xl:w-[25%] md:sticky md:top-20 md:self-start">
         <BalanceDetail selectedBalance={selectedBalance} />
     </div>
 </div>

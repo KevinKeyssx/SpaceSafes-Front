@@ -74,8 +74,8 @@
         </div>
     </Title>
 
-    <div class="flex flex-col md:flex-row gap-4">
-        <div class="grid grid-cols-1 lg:grid-cols-[12fr_3fr_2fr] gap-3 items-center">
+    <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3 items-center">
             <div class="flex-1 relative w-full">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-primary-500">

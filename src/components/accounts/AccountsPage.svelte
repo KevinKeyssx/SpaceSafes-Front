@@ -134,14 +134,12 @@
             </button>
         </div>
     {:else if $accounts }
-        <div class="flex space-x-6">
-            <div class="flex-1">
-                <AccountList
-                    accounts={filteredAccounts }
-                    bind:searchTerm={searchTerm}
-                    bind:showOnlyFavorites={showOnlyFavorites}
-                />
-            </div>
+        <div class="w-full">
+            <AccountList
+                accounts={filteredAccounts}
+                bind:searchTerm={searchTerm}
+                bind:showOnlyFavorites={showOnlyFavorites}
+            />
         </div>
     {/if}
 </div>

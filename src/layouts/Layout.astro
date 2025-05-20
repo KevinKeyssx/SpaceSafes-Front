@@ -10,7 +10,7 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
@@ -18,9 +18,14 @@ const { title } = Astro.props;
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
         <ClientRouter />
+        <script is:inline>
+            // Forzar modo oscuro siempre
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        </script>
 	</head>
 
-    <body class="bg-primary-50/30 dark:bg-primary-900 transition-colors duration-200">
+    <body class="bg-primary-900">
         <Header />
 
         <main class="container mx-auto px-6 py-8">
@@ -35,5 +40,32 @@ const { title } = Astro.props;
 		margin: 0;
 		width: 100%;
 		height: 100%;
+	}
+
+    
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: rgba(15, 85, 82, 0.5); /* primary-900 con transparencia */
+		border-radius: 8px;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: rgba(10, 130, 123, 0.8); /* primary-700 con transparencia */
+		border-radius: 8px;
+		transition: background 0.3s ease;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: rgba(7, 165, 156, 1); /* primary-600 */
+	}
+
+	/* Estilos para Firefox */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(10, 130, 123, 0.8) rgba(15, 85, 82, 0.5);
 	}
 </style>
