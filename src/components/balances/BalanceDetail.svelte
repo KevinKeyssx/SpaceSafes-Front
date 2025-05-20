@@ -1,17 +1,19 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
 
+    import toast from "svelte-french-toast";
+
+    import {
+        errorToast,
+        successToast
+    }                           from "@/config/toast/toast.config";
     import PatternBackground    from '@/components/ui/PatternBackground.svelte';
-    import Dialog               from '@/components/ui/bits/Dialog.svelte';
+    import DeleteButton         from '@/components/ui/Buttons/DeleteButton.svelte';
     import BalanceForm          from '@/components/balances/BalanceForm.svelte';
-
-    import type { Balance } from '@/models/balance/balance.model';
-    import { TypeBalance }  from '@/models/balance/enum/type-balance.enum';
-
-    import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
-
-    import { deleteBalance } from '@/stores/balanceStore';
-
+    import type { Balance }     from '@/models/balance/balance.model';
+    import { TypeBalance }      from '@/models/balance/enum/type-balance.enum';
+    import { loadSpaceSafes }   from '@/services/fetch/getSpaceSafes';
+    import { deleteBalance }    from '@/stores/balanceStore';
     import { getBalanceIcon }   from '@/lib/balances/get-balance-icon';
     import { getCategoryName }  from '@/lib/balances/get-category-name';
     import { getCardTypeName }  from '@/lib/balances/get-card-type-name';
@@ -53,12 +55,13 @@
         return cardNumber;
     }
 
-    // Estado
+
     let isVisible = false;
     let openDelete = false;
     let isEdit = false;
+    let isLoadingDelete = false;
 
-    // Reactividad
+
     $: if ( selectedBalance ) {
         isVisible = true;
     }
@@ -66,6 +69,8 @@
 
     async function confirmDelete(): Promise<void> {
         if ( !selectedBalance ) return;
+
+        isLoadingDelete = true;
 
         const deletedBalance = await loadSpaceSafes<Balance>({
             url: `/api/space-safes/balances/${selectedBalance.id}`,
@@ -75,17 +80,24 @@
         console.log('🚀 ~ file: AccountForm.svelte:53 ~ savedAccount:', deletedBalance)
 
         if ( !deletedBalance ) {
+            isLoadingDelete = false;
+            toast.error( 'Error al eliminar el balance.', errorToast() );
             return;
         }
 
         deleteBalance( selectedBalance.id );
         openDelete = false;
         selectedBalance = null;
+        isLoadingDelete = false;
+
+        toast.success( 'Balance eliminado correctamente.', successToast() );
     }
 </script>
 
 {#if !selectedBalance}
     <div class="flex items-center justify-center p-6 bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50">
+        <PatternBackground patternId="balanceGrid-pending" />
+
         <p class="text-primary-600 dark:text-primary-300 text-center">
             Selecciona un balance para ver sus detalles
         </p>
@@ -95,11 +107,7 @@
         class="overflow-auto bg-primary-50/30 dark:bg-primary-800/30 backdrop-blur-xl rounded-xl shadow-lg border border-primary-200/50 dark:border-primary-700/50 transition-all duration-300 {isVisible ? 'opacity-100' : 'opacity-0'}"
         transition:fade={{ duration: 300 }}
     >
-        <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0">
-            <!-- Elementos decorativos de fondo que se escalan con el contenedor -->
-            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
-            <PatternBackground patternId="balanceGrid-{selectedBalance.id}" />
-        </div>
+        <PatternBackground patternId="balanceGrid-pending" />
 
         <header class="relative">
             <div class="w-full h-48 py-4 bg-gradient-to-br {getCategoryColor(selectedBalance.type)} grid items-center justify-center relative">
@@ -111,37 +119,12 @@
                     {/if}
                 </div>
 
-                <Dialog
-                    openButtonClass="absolute bottom-4 left-4 bg-rose-300 hover:bg-rose-400 shadow-lg p-1 rounded-lg transition-colors duration-300"
-                    bind:open={openDelete}
-                >
-                    {#snippet iconButton()}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="24" stroke-dashoffset="24" d="M12 20h5c0.5 0 1 -0.5 1 -1v-14M12 20h-5c-0.5 0 -1 -0.5 -1 -1v-14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0"/></path><path stroke-dasharray="20" stroke-dashoffset="20" d="M4 5h16"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.2s" values="20;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M10 4h4M10 9v7M14 9v7"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.2s" values="8;0"/></path></g></svg>
-                    {/snippet}
+                <DeleteButton
+                    confirmDelete={confirmDelete}
+                    name="Balance"
+                    disabled={isLoadingDelete}
+                />
 
-                    {#snippet title()}
-                        Eliminar Balance
-                    {/snippet}
-
-                    <div class="space-y-2 w-full">
-                        <p class="text-primary-200 grid text-center">¿Estás seguro de eliminar el balance?
-                            <span class="text-primary-500">
-                                Esta acción no se puede deshacer.
-                            </span>
-                        </p>
-
-                        <button 
-                            type="button" 
-                            on:click={confirmDelete}
-                            class="mx-auto gap-2 flex justify-center px-4 py-1 w-48 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="24" stroke-dashoffset="24" d="M12 20h5c0.5 0 1 -0.5 1 -1v-14M12 20h-5c-0.5 0 -1 -0.5 -1 -1v-14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0"/></path><path stroke-dasharray="20" stroke-dashoffset="20" d="M4 5h16"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.2s" values="20;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M10 4h4M10 9v7M14 9v7"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.2s" values="8;0"/></path></g></svg>
-                            Eliminar Balance
-                        </button>
-                    </div>
-                </Dialog>
-
-                <!-- Botón de editar (esquina derecha) -->
                 <button
                     class="absolute bottom-4 right-4 bg-primary-500/50 hover:bg-primary-600 shadow-lg p-1 rounded-lg transition-colors duration-300"
                     aria-label="Editar Balance"
