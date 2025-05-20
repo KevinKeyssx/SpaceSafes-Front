@@ -1,6 +1,10 @@
 <script lang="ts">
     import { slide } from 'svelte/transition';
 
+    import toast from 'svelte-french-toast';
+
+    import { errorToast, successToast } from '@/config/toast/toast.config';
+
     import Input        from "@/components/ui/Inputs/Input.svelte";
     import Switch       from "@/components/ui/Inputs/Switch.svelte";
     import Combobox     from '@/components/ui/Inputs/Combobox.svelte';
@@ -12,12 +16,14 @@
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
 
     import { addBalance, updateBalance } from '@/stores/balanceStore';
+    import SaveButton from '../ui/Buttons/SaveButton.svelte';
 
 
     export let balance: Balance = {} as Balance;
     export let open : boolean;
 
 
+    let isLoadingSave = false;
     let balanceEdit = { 
         ...balance,
         balance: balance.balance || 0,
@@ -41,11 +47,15 @@
         console.log('🚀 ~ file: BalanceForm.svelte:48 ~ savedBalance:', savedBalance)
 
         if ( !savedBalance ) {
+            isLoadingSave = false;
+            toast.error( 'Ocurrió un error al guardar el balance', errorToast() );
             return;
         }
 
         addBalance( savedBalance );
         open = false;
+        isLoadingSave = false;
+        toast.success( 'Balance guardado correctamente', successToast() );
     }
 
     async function updatedBalance() {
@@ -59,11 +69,15 @@
         });
 
         if ( !savedBalance ) {
+            isLoadingSave = false;
+            toast.error( 'Ocurrió un error al guardar el balance', errorToast() );
             return;
         }
 
         updateBalance( savedBalance );
         open = false;
+        isLoadingSave = false;
+        toast.success( 'Balance actualizado correctamente', successToast() );
     }
 
 
@@ -106,6 +120,9 @@
 
 
     async function saveBalance(): Promise<void> {
+        console.log('🚀 ~ file: BalanceForm.svelte:109 ~ saveBalance: CLIC')
+        isLoadingSave = true;
+
         if ( !balanceEdit.id ) {
             await createBalance();
             return;
@@ -251,10 +268,8 @@
         />
     </div>
 
-    <button
-        type="submit"
-        class="px-4 mt-6 w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-    >
-        Guardar
-    </button>
+    <SaveButton
+        disabled={isLoadingSave}
+        isEdit={balanceEdit.id ? true : false}
+    />
 </form>
