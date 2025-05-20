@@ -1,21 +1,27 @@
 <script lang="ts">
     import { onMount } from 'svelte';
 
+    import toast            from 'svelte-french-toast';
+	import { Toaster } from 'svelte-french-toast';
+
     import {
         paymentDetailStore,
         addMultiplePaymentDetails,
-        setIsLoadingPaymentDetailStore
+        setIsLoadingPaymentDetailStore,
+        isLoadingPaymentDetailStore
     }                                       from '@/stores/paymentDetail.Store';
     import {
         paymentServiceStore,
         setIsLoadingPaymentServiceStore,
-        setPaymentServices
+        setPaymentServices,
+        isLoadingPaymentServiceStore
     }                                       from '@/stores/paymentServiceStore';
     import {
         balanceStore,
         setBalances,
         setIsLoadingBalanceStore,
-        updateBalance
+        updateBalance,
+        isLoadingBalanceStore
     }                                       from '@/stores/balanceStore';
 
     import type { PaymentService }  from '@/models/payment-services/payment-service.model';
@@ -30,6 +36,13 @@
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
 
     import BalanceCard from './BalanceCard.svelte';
+    import { errorToast, successToast } from '@/config/toast/toast.config';
+    import LoadIcon from '@/icons/LoadIcon.svelte';
+    import AddIcon from '@/icons/AddIcon.svelte';
+    import SpaceLoader from '../loader/SpaceLoader.svelte';
+    import BalanceCardLoading from './BalanceCardLoading.svelte';
+    import OutlineButton from '../ui/Buttons/OutlineButton.svelte';
+    import Title from '../ui/Title.svelte';
 
 
     let currentMonth = new Date();
@@ -109,9 +122,8 @@
             return;
         }
 
-        setIsLoadingBalanceStore( false );
-
         setBalances( balanceList );
+        setIsLoadingBalanceStore( false );
     }
 
 
@@ -128,9 +140,8 @@
             return;
         }
 
-        setIsLoadingPaymentServiceStore( false );
-
         setPaymentServices( paymentServiceList );
+        // setIsLoadingPaymentServiceStore( false );
     }
 
 
@@ -159,7 +170,7 @@
         }
 
         setIsLoadingPaymentDetailStore( false );
-
+        setIsLoadingPaymentServiceStore( false );
         addMultiplePaymentDetails( paymentDetailList );
     }
 
@@ -168,7 +179,7 @@
         await Promise.all([
             loadBalanceStore(),
             loadPaymentSerice(),
-            loadPaymentDetailStore()
+            loadPaymentDetailStore(),
         ]);
 
         if ( displayedBalances && displayedBalances.length > 0 ) {
@@ -185,6 +196,16 @@
         const newDate = new Date( currentMonth );
         newDate.setDate(1);
         newDate.setMonth(newDate.getMonth() + increment);
+        currentMonth = newDate;
+        selectedPendingIDs = new Set<string>();
+        selectedPaidIDs = new Set<string>();
+        await loadPaymentDetailStore();
+    }
+
+    async function changeToToday(): Promise<void> {
+        const newDate = new Date();
+        newDate.setDate(1);
+        newDate.setMonth(newDate.getMonth());
         currentMonth = newDate;
         selectedPendingIDs = new Set<string>();
         selectedPaidIDs = new Set<string>();
@@ -326,11 +347,14 @@
     }
 
 
+    let isLoadingSavePayment = false 
     async function savePayment() {
-        if (paymentCompleted.length === 0) {
-            alert("No hay pagos marcados como realizados para registrar.");
+        if ( paymentCompleted.length === 0 ) {
+            toast.error( 'No hay pagos marcados como realizados para registrar.', errorToast() );
             return;
         }
+
+        isLoadingSavePayment = true;
         console.log('🚀 ~ file: PaymentsBoard.svelte:225 ~ paymentCompleted:', paymentCompleted)
 
         const transformedPaymentList = transformPaymentList(paymentCompleted);
@@ -347,57 +371,68 @@
 
         if ( !savedPaymentDetail ) {
             // TODO: Show toast error
+            toast.error( 'Error al registrar los pagos', errorToast() );
             return;
         }
 
         addMultiplePaymentDetails( savedPaymentDetail );
+        isLoadingSavePayment = false;
 
         paymentCompleted = [];
         selectedPaidIDs = new Set<string>();
         selectedPendingIDs = new Set<string>();
+        toast.success( 'Pagos registrados correctamente.', successToast() );
     }
 
 
     function handleMoveAllToPaid(): void {
         if (!balanceSelected) {
-            alert('Por favor, seleccione un balance primero.');
-            return;
-        }
-        if (pendingPayments.length === 0) {
-            alert('No hay pagos pendientes para mover.');
+            toast.error( 'Por favor, seleccione un balance primero.', errorToast() );
             return;
         }
 
-        const amountToMove = pendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        if ( filteredPendingPayments.length === 0 ) {
+            toast.error( 'No hay pagos pendientes para mover.', errorToast() );
+            return;
+        }
+
+        const amountToMove = filteredPendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
         if (balanceSelected.balance < amountToMove) {
-            alert('El balance seleccionado no tiene fondos suficientes.');
+            toast.error( 'El balance seleccionado no tiene fondos suficientes.', errorToast() );
             return; 
         }
 
         const newBalanceAmount = balanceSelected.balance - amountToMove;
-        
-        paymentCompleted = [...paymentCompleted, ...pendingPayments];
+
+        filteredPendingPayments = filteredPendingPayments.map( fp => ({
+            ...fp,
+            balance: balanceSelected!
+        }) );
+
+        paymentCompleted = [...paymentCompleted, ...filteredPendingPayments];
 
         const updatedBalanceData = { ...balanceSelected, balance: newBalanceAmount };
         updateBalance(updatedBalanceData);
         balanceSelected = updatedBalanceData;
     }
 
-    function handleMoveAllToPendingFromPorRealizar(): void {
+    function handleMoveAllToPendingSearchFromTPerform(): void {
         if (!balanceSelected) {
-            alert('Por favor, seleccione un balance primero (para devolver el monto).');
+            toast.error( 'Por favor, seleccione un balance primero (para devolver el monto).', errorToast() );
             return;
         }
         if (paymentCompleted.length === 0) {
-            alert('No hay pagos en "Por Realizar" para mover.');
+            toast.error( 'No hay pagos en "Por Realizar" para mover.', errorToast() );
             return;
         }
 
-        const amountToReturn = paymentCompleted.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const amountToReturn = filteredPaidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
         const newBalanceAmount = balanceSelected.balance + amountToReturn;
+        const idsToMove = new Set(filteredPaidPayments.map(p => p.id));
 
-        paymentCompleted = []; 
+        // Update paymentCompleted by removing only those services that were moved
+        paymentCompleted = paymentCompleted.filter(p => !idsToMove.has(p.id));
 
         const updatedBalanceData = { ...balanceSelected, balance: newBalanceAmount };
         updateBalance(updatedBalanceData);
@@ -405,38 +440,64 @@
     }
 </script>
 
+<Toaster />
+
 <div class="space-y-6 min-h-screen">
     <!-- Month Navigation & Title -->
-    <header class="flex flex-col sm:flex-row justify-between items-center p-4 bg-white dark:bg-primary-800 rounded-lg shadow border border-primary-200 dark:border-primary-700 mb-6">
-        <h1 class="text-2xl font-bold mb-2 sm:mb-0">Gestión de Pagos Mensuales</h1>
-        <div class="flex items-center space-x-2">
-            <button on:click={() => changeMonth(-1)} class="p-2 rounded-md hover:bg-primary-100 dark:hover:bg-primary-700">
-                &lt; Anterior
-            </button>
-            <span class="font-semibold text-lg">{formatMonthYear(currentMonth)}</span>
-            <button on:click={() => changeMonth(1)} class="p-2 rounded-md hover:bg-primary-100 dark:hover:bg-primary-700">
-                Siguiente &gt;
-            </button>
+    <Title>
+        <div slot="title">
+            Gestión de Pagos Mensuales
         </div>
-    </header>
+
+        <div class="z-10 flex items-center space-x-3" slot="content">
+            <OutlineButton
+                onClick={() => changeMonth(-1)}
+                ariaLabel="Anterior"
+                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="10" stroke-dashoffset="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l5 -5M9 12l5 5"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="10;0"/></path></svg>
+            </OutlineButton>
+
+            <span class="font-semibold text-lg text-primary-500">{formatMonthYear(currentMonth)}</span>
+
+            <OutlineButton
+                onClick={() => changeMonth(1)}
+                ariaLabel="Siguiente"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="10" stroke-dashoffset="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12l-5 -5M15 12l-5 5"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="10;0"/></path></svg>
+            </OutlineButton>
+
+            <OutlineButton
+                onClick={changeToToday}
+                ariaLabel="Hoy"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="14" height="0" x="5" y="5" fill="currentColor"><animate fill="freeze" attributeName="height" begin="0.6s" dur="0.2s" values="0;3"/></rect><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="64" stroke-dashoffset="64" d="M12 4h7c0.55 0 1 0.45 1 1v14c0 0.55 -0.45 1 -1 1h-14c-0.55 0 -1 -0.45 -1 -1v-14c0 -0.55 0.45 -1 1 -1Z"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="64;0"/></path><path stroke-dasharray="4" stroke-dashoffset="4" d="M7 4v-2M17 4v-2"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.2s" values="4;0"/></path><path stroke-dasharray="12" stroke-dashoffset="12" d="M7 11h10"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="12;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M7 15h7"><animate fill="freeze" attributeName="stroke-dashoffset" begin="1s" dur="0.2s" values="8;0"/></path></g></svg>
+            </OutlineButton>
+        </div>
+    </Title>
 
     <!-- Balances Section -->
     <section aria-labelledby="balances-title" class="mb-6">
-        <h2 id="balances-title" class="text-xl font-semibold mb-3">
+        <h2 id="balances-title" class="text-xl font-semibold mb-3 text-primary-500 dark:text-primary-400">
             Mis Balances ({displayedBalances ? displayedBalances.length : 0})
         </h2>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
-            {#each displayedBalances as balance (balance.id)}
-                <BalanceCard
-                    {balance}
-                    isSelected={balanceSelected?.id === balance.id}
-                    onClick={() => handleBalanceSelection(balance)}
-                />
-            {:else}
-                <p class="text-primary-500 dark:text-primary-400">No hay balances disponibles. Agrega uno para empezar.</p>
+        {#if $isLoadingBalanceStore}
+        <div class="animate-slide-up grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
+            {#each [1,2,3,4,5,6,7,8,9,10] }
+                <BalanceCardLoading />
             {/each}
         </div>
+        {:else}
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
+                {#each displayedBalances as balance (balance.id)}
+                    <BalanceCard
+                        {balance}
+                        isSelected={balanceSelected?.id === balance.id}
+                        onClick={() => handleBalanceSelection(balance)}
+                    />
+                {/each}
+            </div>
+        {/if}
     </section>
 
     <!-- Payments Grid -->
@@ -444,12 +505,9 @@
         <!-- Pending Payments Column -->
         <section
             aria-labelledby="pending-payments-title"
-            class="animate-slide-up relative h-[calc(100vh-320px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+            class="animate-slide-up relative h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
         >
-            <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0 pointer-events-none">
-                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
-                <PatternBackground patternId="balanceGrid-pending" />
-            </div>
+            <PatternBackground patternId="balanceGrid-pending" />
 
             <div class="flex justify-between items-center">
                 <h3 id="pending-payments-title" class="text-lg font-semibold text-orange-500 dark:text-orange-400">
@@ -461,13 +519,30 @@
                 </p>
             </div>
 
-            <Input
-                type="search"
-                placeholder="Buscar en pendientes..."
-                bind:value={pendingSearchQuery}
-            />
+            <div class="grid grid-cols-[1fr_auto] gap-2">
+                <Input
+                    type="search"
+                    placeholder="Buscar en pendientes..."
+                    bind:value={pendingSearchQuery}
+                />
 
-            <div class="flex-grow overflow-y-auto space-y-3 pr-1">
+                <button
+                    on:click={handleMoveAllToPaid}
+                    disabled={pendingPayments.length === 0 || !balanceSelected}
+                    class="flex items-center gap-0 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Marcar todos como pagados"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="10" stroke-dashoffset="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12l-5 -5M15 12l-5 5"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="10;0"/></path></svg>
+                </button>
+            </div>
+
+            {#if $isLoadingPaymentServiceStore}
+                <div class="flex items-center justify-center h-full">
+                    <SpaceLoader />
+                </div>
+            {:else}
+
+            <div class="flex-grow overflow-y-auto space-y-3 px-2 py-1">
                 {#each filteredPendingPayments as payment (payment.id)}
                     <PaymentCard 
                         paymentService={payment} 
@@ -485,27 +560,17 @@
                 disabled={selectedPendingIDs.size === 0 || !balanceSelected}
                 class="mt-auto w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                Marcar como Pagado ({selectedPendingIDs.size})
+                Marcar como Por Realizar ({selectedPendingIDs.size})
             </button>
-            <!-- New button for Mover Todos a Por Realizar -->
-            <button
-                on:click={handleMoveAllToPaid}
-                disabled={pendingPayments.length === 0 || !balanceSelected}
-                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                Mover Todos a Por Realizar ({pendingPayments.length})
-            </button>
+            {/if}
         </section>
 
         <!-- Pagos por realizar -->
         <section
             aria-labelledby="paid-payments-title"
-            class="animate-slide-up relative h-[calc(100vh-320px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+            class="animate-slide-up relative h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
         >
-            <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0 pointer-events-none">
-                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
-                <PatternBackground patternId="balanceGrid-pending" />
-            </div>
+            <PatternBackground patternId="balanceGrid-pending" />
 
             <div class="flex justify-between items-center">
                 <h3 id="paid-payments-title" class="text-lg font-semibold text-green-500 dark:text-green-400">
@@ -517,13 +582,24 @@
                 </p>
             </div>
 
-            <Input
-                type="search"
-                placeholder="Buscar en por realizar..."
-                bind:value={porRealizarSearchQuery}
-            />
+            <div class="grid grid-cols-[0.1fr_1fr_auto] gap-2">
+                <button
+                    on:click={handleMoveAllToPendingSearchFromTPerform}
+                    disabled={paymentCompleted.length === 0 || !balanceSelected}
+                    class="flex items-center gap-0 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Marcar todos como realizados"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="10" stroke-dashoffset="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l5 -5M9 12l5 5"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="10;0"/></path></svg>
+                </button>
 
-            <div class="flex-grow overflow-y-auto space-y-3 pr-1">
+                <Input
+                    type="search"
+                    placeholder="Buscar en por realizar..."
+                    bind:value={porRealizarSearchQuery}
+                />
+            </div>
+
+            <div class="flex-grow overflow-y-auto space-y-3 px-2 py-1">
                 {#each filteredPaidPayments as payment (payment.id)}
                     <PaymentCard 
                         paymentService={payment} 
@@ -542,18 +618,18 @@
                 class="mt-auto w-full bg-primary-400 hover:bg-primary-500 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
                 Mover a Pendientes ({selectedPaidIDs.size})
             </button>
-            <!-- New button for Mover Todos a Pendientes -->
-            <button
-                on:click={handleMoveAllToPendingFromPorRealizar}
-                disabled={paymentCompleted.length === 0 || !balanceSelected}
-                class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                Mover Todos a Pendientes ({paymentCompleted.length})
-            </button>
+
             <button 
                 on:click={savePayment}
-                disabled={paymentCompleted.length === 0}
-                class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                disabled={paymentCompleted.length === 0 || isLoadingSavePayment}
+                class="flex items-center gap-2 justify-center w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {#if isLoadingSavePayment}
+                    <LoadIcon />
+                {:else}
+                    <AddIcon />
+                {/if}
+
                 Registrar Pagos
             </button>
         </section>
@@ -561,12 +637,9 @@
         <!-- Pagos realizados -->
         <section
             aria-labelledby="realizados-payments-title"
-            class="animate-slide-up relative h-[calc(100vh-320px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
+            class="animate-slide-up relative h-[calc(100vh-350px)] bg-white dark:bg-primary-800 p-4 rounded-lg shadow-lg border border-primary-200 dark:border-primary-700 flex flex-col space-y-4"
         >
-            <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0 pointer-events-none">
-                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
-                <PatternBackground patternId="balanceGrid-done" />
-            </div>
+            <PatternBackground patternId="balanceGrid-pending" />
 
             <div class="flex justify-between items-center">
                 <h3 id="realizados-payments-title" class="text-lg font-semibold text-primary-500 dark:text-primary-400">
@@ -584,11 +657,17 @@
                 bind:value={paidSearchQuery}
             />
 
-            {#each filteredRealizadosDetails as paymentDetail (paymentDetail.id)}
-                <PaymentDetailCard {paymentDetail} />
+            {#if $isLoadingPaymentDetailStore}
+                <div class="flex items-center justify-center h-full">
+                    <SpaceLoader />
+                </div>
             {:else}
-                <p class="text-center text-primary-500 dark:text-primary-400 py-4">No hay pagos registrados o que coincidan con tu búsqueda.</p>
-            {/each}
+                {#each filteredRealizadosDetails as paymentDetail (paymentDetail.id)}
+                    <PaymentDetailCard {paymentDetail} />
+                {:else}
+                    <p class="text-center text-primary-500 dark:text-primary-400 py-4">No hay pagos registrados o que coincidan con tu búsqueda.</p>
+                {/each}
+            {/if}
         </section>
     </div>
 </div>
