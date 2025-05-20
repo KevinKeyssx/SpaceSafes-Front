@@ -15,7 +15,6 @@
         openButtonClass? : string;
         onSave?         : () => void;
 		contentProps?   : WithoutChild<Dialog.ContentProps>;
-		// ...other component props if you wish to pass them
 	};
 
 
