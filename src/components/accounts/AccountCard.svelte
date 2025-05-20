@@ -2,12 +2,12 @@
     import type { Account } from "@/models/account/account.model";
     import { fade } from 'svelte/transition';
     import PatternBackground from "../ui/PatternBackground.svelte";
+    import Line from "../ui/Inputs/Line.svelte";
 
     export let account: Account;
     export let selectedAccountId: string | null = null;
-
     export let handleAccountClick: (account: Account) => void = () => {};
-    
+
     // Obtener el dominio para mostrar
     function getDomain(url: string): string {
         try {
@@ -28,14 +28,14 @@
 >
     <button
         on:click={() => handleAccountClick(account)}
-        class="w-full relative overflow-hidden border-0 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 flex flex-col p-6 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-2xl group animate-slide-up backdrop-blur-lg {
+        class="w-full relative overflow-hidden border-0 bg-gradient-to-br bg-primary-50 dark:from-primary-700 dark:via-primary-800 dark:to-primary-900 flex flex-col p-6 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-2xl group animate-slide-up backdrop-blur-lg {
             selectedAccountId === account.id
             ? 'ring-2 ring-primary-300 shadow-lg shadow-primary-500/20'
             : 'hover:scale-[1.01] hover:shadow-xl hover:shadow-primary-500/10'
         }"
     >
         <!-- Elementos decorativos de fondo -->
-        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
+        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br dark:from-white/10 dark:to-transparent opacity-40"></div>
         <div class="absolute -top-10 -left-10 w-40 h-40 bg-primary-600/20 rounded-full blur-2xl"></div>
         <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-primary-500/20 rounded-full blur-2xl"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary-400/5 rounded-full blur-xl opacity-70"></div>
@@ -72,7 +72,7 @@
             </div>
 
             <!-- Línea divisoria con degradado -->
-            <div class="h-px w-full bg-gradient-to-r from-transparent via-primary-400/30 to-transparent my-3"></div>
+            <Line />
 
             <!-- Enlaces con mejor estilo -->
             <div class="mt-2 flex flex-wrap gap-2">
