@@ -6,6 +6,8 @@
     
     export let balances: Balance[] = [];
     export let searchTerm: string = '';
+    export let categoryFilter: string = '';
+    export let showOnlyFavorites: boolean = false;
     
     // Estado para el balance seleccionado
     let selectedBalance: Balance | null = null;
@@ -15,19 +17,26 @@
         selectedBalance = balance;
     }
     
-    // Función para filtrar balances según el término de búsqueda
+    // Función para filtrar balances según el término de búsqueda, categoría y favoritos
     $: filteredBalances = balances.filter(balance => {
-        if (!searchTerm.trim()) return true;
-        
         const term = searchTerm.toLowerCase().trim();
-        
-        // Buscar por nombre
+        const category = categoryFilter?.toLowerCase().trim();
+
+        // Filtrar por favoritos
+        const favoriteMatch = !showOnlyFavorites || balance.isFavorite;
+        if (!favoriteMatch) return false; // Si no es favorito y se piden solo favoritos, descartar
+
+        // Filtrar por categoría
+        const categoryMatch = !category || balance.type?.toLowerCase() === category;
+
+        // Si no hay término de búsqueda, solo importa el filtro de categoría
+        if (!term) return categoryMatch;
+
+        // Filtrar por término de búsqueda (si categoryMatch es true)
+        if (!categoryMatch) return false; // Si no coincide la categoría, no seguir buscando
+
         const nameMatch = balance.name?.toLowerCase().includes(term);
-        
-        // Buscar por número de tarjeta (si existe)
         const cardNumberMatch = balance.cardNumber?.toLowerCase().includes(term);
-        
-        // Buscar por nombre del banco (si existe)
         const bankNameMatch = balance.bankName?.toLowerCase().includes(term);
         
         return nameMatch || cardNumberMatch || bankNameMatch;
