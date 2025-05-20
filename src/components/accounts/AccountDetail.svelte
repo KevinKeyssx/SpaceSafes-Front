@@ -77,7 +77,7 @@
 
 {#if !selectedAccount}
     <div 
-        class="bg-white/10 dark:bg-primary-800/30 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6"
+        class="bg-white/10 dark:bg-primary-800/30 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6 h-full"
     >
         <div class="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,7 +90,7 @@
     </div>
 {:else}
     <div 
-        class="bg-white dark:bg-primary-700/30 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+        class="bg-white dark:bg-primary-700/30 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden max-h-[calc(100vh-120px)] md:overflow-y-auto"
         transition:fade={{ duration: 300 }}
     >
         <!-- Encabezado con gradiente -->
