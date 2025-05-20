@@ -5,12 +5,13 @@
     import PatternBackground    from "@/components/ui/PatternBackground.svelte";
     import GlowEffects          from "@/components/ui/GlowEffects.svelte";
     import { getBalanceIcon }   from "@/lib/balances/get-balance-icon";
+    import { getNameCategory }  from "@/lib/links/getNameCategory";
+
 
     export let link: Link;
+
+
     const noImage = 'https://res.cloudinary.com/dbgzsikcs/image/upload/v1747376624/sample/3f68b623-b1d4-48a8-bd3f-6a7c3fce6397.avif'
-
-
-
 
 
     function formatDate(dateString: string): string {
@@ -30,11 +31,7 @@
     transition:fade={{ duration: 300 }}
 >
     <!-- Contenedor interno para el efecto de escala -->
-    <div class="absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-[1.02] z-0">
-        <!-- Elementos decorativos de fondo que se escalan con el contenedor -->
-        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent opacity-40"></div>
-        <PatternBackground patternId="linkGrid-{link.id}" />
-    </div>
+    <PatternBackground patternId="linkGrid-{link.id}" />
 
     <!-- Efectos de brillo que permanecen fijos -->
     <GlowEffects />
@@ -139,7 +136,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
             </svg>
 
-            <span class="text-xs">{link.category}</span>
+            <span class="text-xs">{getNameCategory(link.category)}</span>
         </div>
     </footer>
 </div>
