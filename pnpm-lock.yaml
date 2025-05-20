@@ -35,12 +35,18 @@ importers:
       bits-ui:
         specifier: ^1.4.8
         version: 1.4.8(svelte@5.28.2)
+      lz-string:
+        specifier: ^1.5.0
+        version: 1.5.0
       phosphor-svelte:
         specifier: ^3.0.1
         version: 3.0.1(svelte@5.28.2)(vite@6.3.5(@types/node@22.15.17)(jiti@1.21.7)(yaml@2.7.1))
       svelte:
         specifier: ^5.28.2
         version: 5.28.2
+      svelte-french-toast:
+        specifier: ^1.2.0
+        version: 1.2.0(svelte@5.28.2)
       tailwindcss:
         specifier: 3.3.5
         version: 3.3.5
@@ -1247,6 +1253,10 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
+  lz-string@1.5.0:
+    resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
+    hasBin: true
+
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
 
@@ -1840,11 +1850,21 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  svelte-french-toast@1.2.0:
+    resolution: {integrity: sha512-5PW+6RFX3xQPbR44CngYAP1Sd9oCq9P2FOox4FZffzJuZI2mHOB7q5gJBVnOiLF5y3moVGZ7u2bYt7+yPAgcEQ==}
+    peerDependencies:
+      svelte: ^3.57.0 || ^4.0.0
+
   svelte-toolbelt@0.7.1:
     resolution: {integrity: sha512-HcBOcR17Vx9bjaOceUvxkY3nGmbBmCBBbuWLLEWO6jtmWH8f/QoWmbyUfQZrpDINH39en1b8mptfPQT9VKQ1xQ==}
     engines: {node: '>=18', pnpm: '>=8.7.0'}
     peerDependencies:
       svelte: ^5.0.0
+
+  svelte-writable-derived@3.1.1:
+    resolution: {integrity: sha512-w4LR6/bYZEuCs7SGr+M54oipk/UQKtiMadyOhW0PTwAtJ/Ai12QS77sLngEcfBx2q4H8ZBQucc9ktSA5sUGZWw==}
+    peerDependencies:
+      svelte: ^3.2.1 || ^4.0.0-next.1 || ^5.0.0-next.94
 
   svelte2tsx@0.7.37:
     resolution: {integrity: sha512-uQCWibXwUNPGQBGTZP1axIpFGFHTXXN30/ppodLVXCnX23U1nzEhqiVtFSEQjtUK3pFVxPhdnfyxD6ikxMCzPQ==}
@@ -3439,6 +3459,8 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
+  lz-string@1.5.0: {}
+
   magic-string@0.30.17:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -4295,11 +4317,20 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
+  svelte-french-toast@1.2.0(svelte@5.28.2):
+    dependencies:
+      svelte: 5.28.2
+      svelte-writable-derived: 3.1.1(svelte@5.28.2)
+
   svelte-toolbelt@0.7.1(svelte@5.28.2):
     dependencies:
       clsx: 2.1.1
       runed: 0.23.4(svelte@5.28.2)
       style-to-object: 1.0.8
+      svelte: 5.28.2
+
+  svelte-writable-derived@3.1.1(svelte@5.28.2):
+    dependencies:
       svelte: 5.28.2
 
   svelte2tsx@0.7.37(svelte@5.28.2)(typescript@5.8.3):
