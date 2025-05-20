@@ -1,7 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
 
+	import { Toaster } from 'svelte-french-toast';
+
     import LinkList from './LinkList.svelte';
+    import Input from '../ui/Inputs/Input.svelte';
+    import Combobox from '../ui/Inputs/Combobox.svelte';
+    import Switch from '../ui/Inputs/Switch.svelte';
+    import Title from '../ui/Title.svelte';
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
     import type {  Link, LinkSave } from '@/models/links/link.model';
     import {
@@ -13,6 +19,7 @@
     } from '@/stores/linksStore';
     import Dialog from '../ui/bits/Dialog.svelte';
     import LinkForm from './LinkForm.svelte';
+    import SpaceLoader from '../loader/SpaceLoader.svelte';
 
 
     onMount(async() => {
@@ -23,7 +30,7 @@
         setIsLoadingLinksStore(true);
         const linkList = await loadSpaceSafes<Link[]>({ url: '/api/space-safes/navly' });
 
-        if (  linkList === null ) {
+        if ( !linkList ) {
             console.log('🚀 ~ file: LinksPage.svelte:15 ~ linkList:')
             setIsLoadingLinksStore(false);
             return;
@@ -32,14 +39,25 @@
         setIsLoadingLinksStore(false);
         setLinks( linkList );
     });
-    let open = false
+    let open = false;
+    let searchTerm = '';
+    let categoryFilter = ''; // Stores the selected category value
+    let showOnlyFavorites = false;
+
+    // Derive categories for Combobox
+    $: uniqueCategories = Array.from(new Set($linksStore.map(link => link.category))).map(cat => ({ value: cat, label: cat || 'Sin Categoría' }));
+    $: categoryOptions = [{ value: '', label: 'Todas las categorías' }, ...uniqueCategories];
 </script>
 
-<div>
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-primary-900 dark:text-primary-100">Mis Enlaces Web</h1>
+<Toaster />
 
-        <Dialog
+<div class="space-y-6">
+    <Title>
+        <div slot="title">
+            Mis Enlaces Web
+        </div>
+        <div slot="content">
+            <Dialog
             buttonText="Añadir Enlace"
             bind:open={open}
         >
@@ -52,19 +70,52 @@
             {/snippet}
 
             <LinkForm link={{} as LinkSave} bind:open={open}/>
-        </Dialog>       
+        </Dialog>
+        </div>
+    </Title>
+
+    <div class="flex flex-col md:flex-row gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-[12fr_3fr_2fr] gap-3 items-center">
+            <div class="flex-1 relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-primary-500">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                </div>
+                <Input
+                    type="search"
+                    placeholder="Buscar por nombre o URL..."
+                    bind:value={searchTerm}
+                />
+            </div>
+
+            <Combobox
+                bind:value={categoryFilter}
+                placeholder="Filtrar por categoría"
+                options={categoryOptions}
+            />
+
+            <Switch
+                bind:checked={showOnlyFavorites}
+                label="Solo favoritos"
+            />
+        </div>
     </div>
 
     {#if $isLoadingLinksStore}
-        <div class="flex justify-center items-center p-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <span class="ml-2">Cargando enlaces...</span>
+        <div class="flex items-center justify-center h-full">
+            <SpaceLoader />
         </div>
     {:else if $errorLinksStore}
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
             <p>Error al cargar las cuentas. Intente nuevamente más tarde.</p>
         </div>
     {:else if $linksStore }
-        <LinkList links={ $linksStore } />
+        <LinkList 
+            links={ $linksStore } 
+            searchTerm={searchTerm} 
+            categoryFilter={categoryFilter} 
+            showOnlyFavorites={showOnlyFavorites} 
+        />
     {/if}
 </div>
