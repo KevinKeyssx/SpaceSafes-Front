@@ -23,18 +23,18 @@ const menuItems = [
 const currentPath   = Astro.url.pathname;
 const token         = Astro.locals.authToken;
 ---
-<header class="fixed top-0 left-0 right-0 z-50 bg-primary-50/90 dark:bg-primary-800/90 backdrop-blur-lg shadow-lg animate-fade-in">
+<header class="fixed top-0 left-0 right-0 z-40 bg-primary-50/90 dark:bg-primary-800/90 backdrop-blur-lg shadow-lg animate-fade-in">
     <div class="container mx-auto">
         <div class="flex items-center justify-between h-16 px-4 md:px-8">
             <div class="flex items-center gap-2">
-                <svg class="text-primary-700 dark:text-primary-500" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box-icon lucide-box"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                <svg class="text-primary-700 dark:text-primary-500" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
 
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+                <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
                     Dashboard
                 </h1>
             </div>
 
-            <!-- Navegación principal (antes en Sidebar) -->
+            <!-- Navegación principal (desktop) -->
             {token && (
             <nav class="hidden md:flex ml-8">
                 <ul class="flex space-x-1">
@@ -51,7 +51,7 @@ const token         = Astro.locals.authToken;
                             }`}
                         >
                         <item.icon />
-                        <span class="ml-2 font-medium">
+                        <span class="ml-2 font-medium hidden lg:block">
                             {item.name}
                         </span>
                         </a>
@@ -61,30 +61,14 @@ const token         = Astro.locals.authToken;
             </nav>
             )}
 
-            <div class="flex items-center space-x-4">
-                <!-- Menú móvil (hamburguesa) -->
-                <button 
-                    id="mobile-menu-button"
-                    class="md:hidden text-primary-700 dark:text-primary-200 hover:text-primary-600 dark:hover:text-primary-400"
-                    aria-label="Abrir menú"
+            <div class="flex items-center space-x-1">
+                <!-- Botón de tema oculto ya que solo usamos modo oscuro -->
+                <!-- <button 
+                    class="text-primary-200 hover:text-primary-400 transition-transform duration-300 hover:scale-110"
+                    aria-label="Modo oscuro"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                    </svg>
-                </button>
-
-                <!-- Botón de tema -->
-                <!-- <button 
-                    id="theme-toggle" 
-                    class="text-primary-700 dark:text-primary-200 hover:text-primary-600 dark:hover:text-primary-400 transition-transform duration-300 hover:scale-110"
-                    aria-label="Cambiar tema"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden dark:block">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                    </svg>
-
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 block dark:hidden">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
                     </svg>
                 </button> -->
 
@@ -109,13 +93,39 @@ const token         = Astro.locals.authToken;
                         }
                     }}/>
                 </SignedIn>
+
+                <!-- Botón del menú móvil con animación -->
+                <button 
+                    id="mobile-menu-button"
+                    class="md:hidden flex items-center justify-center w-10 h-10 rounded-full text-primary-700 dark:text-primary-200 hover:bg-primary-100/50 dark:hover:bg-primary-700/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+                    aria-label="Abrir menú"
+                    aria-expanded="false"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 transition-transform duration-300" id="menu-icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
+</header>
 
-    <!-- Menú móvil desplegable -->
-    <div id="mobile-menu" class="hidden md:hidden bg-primary-50/95 dark:bg-primary-800/95 backdrop-blur-lg shadow-lg">
-        <nav class="container mx-auto px-4 py-3">
+<!-- Panel deslizante para menú móvil (fuera del header) -->
+<div id="mobile-menu" class="fixed inset-0 z-50 transform translate-x-full transition-transform duration-300 ease-in-out md:hidden">
+    <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" id="mobile-menu-backdrop"></div>
+    <div class="absolute right-0 top-0 h-full w-3/4 max-w-xs bg-primary-50 dark:bg-primary-800 shadow-xl overflow-y-auto">
+        <!-- Cabecera del panel -->
+        <div class="flex items-center justify-between p-4 border-b border-primary-200 dark:border-primary-700">
+            <h3 class="text-lg font-semibold text-primary-700 dark:text-primary-200">Menú</h3>
+            <button id="close-mobile-menu" class="p-2 rounded-full hover:bg-primary-100 dark:hover:bg-primary-700/50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-primary-700 dark:text-primary-200">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Navegación -->
+        <nav class="p-4">
             <ul class="space-y-2">
                 {menuItems.map(item => (
                 <li>
@@ -140,4 +150,97 @@ const token         = Astro.locals.authToken;
             </ul>
         </nav>
     </div>
-</header>
+</div>
+
+<script is:inline>
+    // Función para inicializar el menú móvil
+    function initMobileMenu() {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        
+        // Manejo del menú móvil
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMenuButton = document.getElementById('close-mobile-menu');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = document.getElementById('menu-icon');
+        const menuBackdrop = document.getElementById('mobile-menu-backdrop');
+        
+        // Si no encontramos los elementos, salimos
+        if (!mobileMenuButton || !mobileMenu) return;
+        
+        // Limpiamos eventos anteriores para evitar duplicados
+        const newMobileMenuButton = mobileMenuButton.cloneNode(true);
+        const newCloseMenuButton = closeMenuButton?.cloneNode(true);
+        const newMenuBackdrop = menuBackdrop?.cloneNode(true);
+        
+        if (mobileMenuButton.parentNode) {
+            mobileMenuButton.parentNode.replaceChild(newMobileMenuButton, mobileMenuButton);
+        }
+        
+        if (closeMenuButton && closeMenuButton.parentNode) {
+            closeMenuButton.parentNode.replaceChild(newCloseMenuButton, closeMenuButton);
+        }
+        
+        if (menuBackdrop && menuBackdrop.parentNode) {
+            menuBackdrop.parentNode.replaceChild(newMenuBackdrop, menuBackdrop);
+        }
+        
+        // Función para abrir el menú
+        function openMobileMenu() {
+            document.body.style.overflow = 'hidden'; // Evitar scroll en el body
+            mobileMenu.classList.remove('translate-x-full');
+            mobileMenu.classList.add('translate-x-0');
+            menuIcon?.classList.add('rotate-90');
+            newMobileMenuButton.setAttribute('aria-expanded', 'true');
+        }
+        
+        // Función para cerrar el menú
+        function closeMobileMenu() {
+            document.body.style.overflow = ''; // Restaurar scroll
+            mobileMenu.classList.remove('translate-x-0');
+            mobileMenu.classList.add('translate-x-full');
+            menuIcon?.classList.remove('rotate-90');
+            newMobileMenuButton.setAttribute('aria-expanded', 'false');
+        }
+        
+        // Eventos para abrir/cerrar el menú
+        newMobileMenuButton.addEventListener('click', openMobileMenu);
+        
+        if (newCloseMenuButton) {
+            newCloseMenuButton.addEventListener('click', closeMobileMenu);
+        }
+        
+        if (newMenuBackdrop) {
+            newMenuBackdrop.addEventListener('click', closeMobileMenu);
+        }
+        
+        // Cerrar menú al hacer clic en un enlace
+        const menuLinks = mobileMenu.querySelectorAll('a');
+        menuLinks.forEach(link => {
+            // Clonar y reemplazar para evitar duplicados
+            const newLink = link.cloneNode(true);
+            link.parentNode.replaceChild(newLink, link);
+            newLink.addEventListener('click', closeMobileMenu);
+        });
+        
+        // Cerrar menú con la tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !mobileMenu.classList.contains('translate-x-full')) {
+                closeMobileMenu();
+            }
+        });
+    }
+
+    // Inicializar en carga inicial
+    document.addEventListener('DOMContentLoaded', initMobileMenu);
+    
+    // Inicializar después de cada navegación con Astro
+    document.addEventListener('astro:page-load', initMobileMenu);
+    document.addEventListener('astro:after-swap', initMobileMenu);
+
+    // Redefinir la función toggleTheme por si acaso
+    window.toggleTheme = function() {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    };
+</script>
