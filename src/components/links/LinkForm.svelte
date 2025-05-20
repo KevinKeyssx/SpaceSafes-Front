@@ -3,6 +3,10 @@
     import { slide }    from 'svelte/transition';
     import { onMount }  from 'svelte';
 
+    import toast from 'svelte-french-toast';
+
+    import { errorToast, successToast } from '@/config/toast/toast.config';
+
     import { 
         balanceStore, 
         isLoadingBalanceStore, 
@@ -21,12 +25,14 @@
     import type { Balance }         from '@/models/balance/balance.model';
 
     import { loadSpaceSafes } from '@/services/fetch/getSpaceSafes';
+    import SaveButton from '../ui/Buttons/SaveButton.svelte';
 
 
     export let link : LinkSave = {} as LinkSave;
     export let open : boolean;
 
 
+    let isLoadingSave = false;
     let disabledName        = true;
     let disabledDescription = true;
     let navlyContainer      : HTMLDivElement;
@@ -99,11 +105,15 @@
         console.log('🚀 ~ file: LinkForm.svelte:56 ~ savedLink:', savedLink)
 
         if ( !savedLink ) {
+            isLoadingSave = false;
+            toast.error( 'Ocurrió un error al guardar el enlace', errorToast() );
             return;
         }
 
         addLink( savedLink );
         open = false;
+        isLoadingSave = false;
+        toast.success( 'Enlace guardado correctamente', successToast() );
     }
 
 
@@ -130,15 +140,20 @@
         
         console.log('🚀 ~ file: LinkForm.svelte:126 ~ savedLink:', savedLink)
         if ( !savedLink ) {
+            isLoadingSave = false;
+            toast.error( 'Ocurrió un error al guardar el enlace', errorToast() );
             return;
         }
 
         updateLink( savedLink );
-        // open = false;
+        open = false;
+        isLoadingSave = false;
+        toast.success( 'Enlace actualizado correctamente', successToast() );
     }
 
 
     async function saveLink(): Promise<void> {
+        isLoadingSave = true;
         linkEdit.balanceIds = linkEdit.balanceIds.filter( id => id.trim() !== '' );
 
         if ( !linkEdit.id ) {
@@ -339,10 +354,9 @@
         {/if}
     </div>
 
-    <button
-        type="submit"
-        class="px-4 mt-6 w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-    >
-        Guardar
-    </button>
+    <SaveButton
+        disabled={isLoadingSave}
+        isEdit={linkEdit.id ? true : false}
+        styles="mt-6"
+    />
 </form>
