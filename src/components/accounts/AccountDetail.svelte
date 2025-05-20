@@ -1,25 +1,41 @@
 <script lang="ts">
-    import type { Account } from "@/models/account/account.model";
     import { fade } from 'svelte/transition';
+
+    import toast from "svelte-french-toast";
+
+    import { errorToast, successToast } from "@/config/toast/toast.config";
+
+    import Dialog from "@/components/ui/bits/Dialog.svelte";
+    import AccountForm from "@/components/accounts/AccountForm.svelte";
+    import type { Account } from "@/models/account/account.model";
     import { deleteAccount } from '@/stores/accountsStore';
-    import Dialog from "../ui/bits/Dialog.svelte";
-    import AccountForm from "./AccountForm.svelte";
     import { loadSpaceSafes } from "@/services/fetch/getSpaceSafes";
+    import ShowIcon from "@/icons/ShowIcon.svelte";
+    import DeleteIcon from '@/icons/DeleteIcon.svelte';
+    import LoadIcon from '@/icons/LoadIcon.svelte';
+    import EditIcon from '@/icons/EditIcon.svelte';
+    import PatternBackground from '../ui/PatternBackground.svelte';
+
 
     export let selectedAccount: Account | null = null;
-    
-    // Obtener el dominio para mostrar
+
+
+    let isLoadingDelete = false;
+
+
     function getDomain(url: string): string {
         try {
-            const domain = new URL(url).hostname;
-            return domain;
+            return new URL(url).hostname;
         } catch (e) {
             return url;
         }
     }
-    
+
+
     async function confirmDelete(): Promise<void> {
-        if (!selectedAccount) return;
+        if ( !selectedAccount ) return;
+
+        isLoadingDelete = true;
 
         const deletedAccount = await loadSpaceSafes<Account>({
             url: `/api/space-safes/accounts/${selectedAccount.id}`,
@@ -28,11 +44,19 @@
 
         console.log('🚀 ~ file: AccountForm.svelte:53 ~ savedAccount:', deletedAccount)
 
-        if ( deletedAccount ) {
-            deleteAccount(selectedAccount.id);
-            openDelete = false;
-            selectedAccount = null;
+        if ( !deletedAccount ) {
+            isLoadingDelete = false;
+            toast.error( 'Error al eliminar la cuenta.', errorToast() );
+            return;
         }
+
+        deleteAccount( selectedAccount.id );
+
+        openDelete = false;
+        selectedAccount = null;
+        isLoadingDelete = false;
+
+        toast.success( 'Cuenta eliminada correctamente.', successToast() );
     }
 
 
@@ -45,15 +69,15 @@
     }
 
 
-    async function coypClipboar( copy: string ) {
+    async function coypClipboar( type: string, copy: string ) {
         await navigator.clipboard.writeText( copy );
+        toast.success( `${type} copiado correctamente.`, successToast() );
     }
 </script>
 
 {#if !selectedAccount}
     <div 
         class="bg-white/10 dark:bg-primary-800/30 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6"
-        transition:fade={{ duration: 300 }}
     >
         <div class="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,8 +118,6 @@
                 <h2 class="text-2xl font-bold text-white drop-shadow-sm">
                     {selectedAccount.name || selectedAccount.username}
                 </h2>
-
-                
             </div>
             <div class="flex justify-between">
 
@@ -108,118 +130,132 @@
                     {/snippet}
 
                     {#snippet title()}
-                        
                         Eliminar Cuenta
                     {/snippet}
 
                     <div class="space-y-2 w-full">
                         <p class="text-primary-200 grid text-center">¿Estás seguro de eliminar la cuenta?
                             <span class="text-primary-500">
-
                                 Esta acción no se puede deshacer.
                             </span>
                         </p>
+
                         <button 
-                        type="button" 
-                        on:click={confirmDelete}
-                        class="mx-auto gap-2 flex justify-center px-4 py-1 w-48 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                            type="button" 
+                            on:click={confirmDelete}
+                            disabled={isLoadingDelete}
+                            class="disabled:opacity-50 items-center gap-2 mx-auto flex justify-center px-4 py-1 w-48 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                         >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="24" stroke-dashoffset="24" d="M12 20h5c0.5 0 1 -0.5 1 -1v-14M12 20h-5c-0.5 0 -1 -0.5 -1 -1v-14"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0"/></path><path stroke-dasharray="20" stroke-dashoffset="20" d="M4 5h16"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.2s" values="20;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M10 4h4M10 9v7M14 9v7"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.2s" values="8;0"/></path></g></svg>
+                            {#if isLoadingDelete}
+                                <LoadIcon />
+                            {:else}
+                                <DeleteIcon />
+                            {/if}
+
                             Eliminar Cuenta
                         </button>
                     </div>
                 </Dialog>
-                
-                <button
-                class= "bg-primary-500/50 hover:bg-primary-700 p-1 rounded-lg transition-colors duration-300"
-                aria-label="Editar Cuenta"
-                on:click={() => isEdit = !isEdit}
 
+                <button
+                    class= "bg-primary-500/50 hover:bg-primary-700 p-1 rounded-lg transition-colors duration-300"
+                    aria-label="Editar Cuenta"
+                    on:click={() => isEdit = !isEdit}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="20" stroke-dashoffset="20" d="M3 21h18"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="20;0"/></path><path stroke-dasharray="48" stroke-dashoffset="48" d="M7 17v-4l10 -10l4 4l-10 10h-4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.2s" dur="0.6s" values="48;0"/></path><path stroke-dasharray="8" stroke-dashoffset="8" d="M14 6l4 4"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="8;0"/></path></g><path fill="currentColor" fill-opacity="0" d="M14 6l4 4L21 7L17 3Z"><animate fill="freeze" attributeName="fill-opacity" begin="1.1s" dur="0.15s" values="0;0.3"/></path></svg>
+                    <EditIcon />
                 </button>
-                </div>
+            </div>
         </div>
 
-    {#if isEdit}
-    <AccountForm
-    account={selectedAccount}
-    bind:open={isEdit}
-/>
-    {:else}
-    <div class="p-6 space-y-3">
-        <div class="grid gap-2">
-            <span class="text-sm font-medium text-gray-500 dark:text-primary-400">Usuario</span>
-            <button
-                class="text-normal text-primary-900 dark:text-primary-100 bg-primary-50 dark:bg-primary-700/50 px-2 py-1 rounded"
-                on:click={() => coypClipboar(selectedAccount?.username || '')}
+        {#if isEdit}
+            <div class="py-6">
+                <AccountForm
+                    account={selectedAccount}
+                    bind:open={isEdit}
+                />
+            </div>
+        {:else}
+            <div
+                class="pb-5 pt-2 px-6 space-y-3 "
+                transition:fade={{ duration: 300 }}
             >
-                {selectedAccount.username}
-            </button>
-        </div>
-        <div class="grid gap-2">
-            <span class="text-sm font-medium text-gray-500 dark:text-primary-400">Contraseña</span>
-            <div class="flex items-center space-x-2">
-                <button
-                    class="text-normal w-full text-primary-900 dark:text-primary-100 font-mono bg-primary-50 dark:bg-primary-700/50 px-2 py-1 rounded"
-                    on:click={() => coypClipboar(selectedAccount?.password || '')}
-                >
-                    {#if showPassowrd}
-                        {selectedAccount?.password}
-                    {:else}
-                        •••••••••••••••••••••••
-                    {/if}
-                </button>
-                <button 
-                    type="button" 
-                    class="text-primary-600 hover:scale-110 transition-all duration-200 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
-                    title="Mostrar contraseña"
-                    aria-label="Mostrar contraseña"
-                    on:click={() => showPassowrd = !showPassowrd}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <!-- Enlaces -->
-        <div>
-            <h3 class="text-sm font-medium text-primary-500 dark:text-primary-400 mb-2">Enlaces</h3>
+                <PatternBackground patternId="balanceGrid-pending" />
 
-            {#if selectedAccount.navly && selectedAccount.navly.length > 0}
-                <div class="flex flex-wrap gap-2">
-                    {#each selectedAccount.navly as link}
-                        <a 
-                            href={link.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center px-3 py-1.5 bg-primary-100 hover:bg-primary-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full text-sm text-gray-700 dark:text-gray-300 transition-colors"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            {getDomain(link.url)}
-                        </a>
-                    {/each}
+                <div class="grid gap-2">
+                    <span class="text-sm font-medium text-gray-500 dark:text-primary-400">Usuario</span>
+
+                    <button
+                        class="text-normal text-primary-900 dark:text-primary-100 bg-primary-50 dark:bg-primary-700/50 px-2 py-1 rounded"
+                        on:click={() => coypClipboar('Usuario', selectedAccount?.username || '')}
+                    >
+                        {selectedAccount.username}
+                    </button>
                 </div>
-            {:else}
-                <p class="text-sm text-primary-500 dark:text-primary-400">No hay enlaces disponibles</p>
-            {/if}
-        </div>
-        <!-- Fechas -->
-        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-primary-200 dark:border-gray-700">
-            <div>
-                <span class="text-sm font-medium text-gray-500 dark:text-primary-400 block">Creado</span>
-                <span class="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedAccount.createdAt)}</span>
+
+                <div class="grid gap-2">
+                    <span class="text-sm font-medium text-gray-500 dark:text-primary-400">Contraseña</span>
+
+                    <div class="flex items-center space-x-2">
+                        <button
+                            class="text-normal w-full text-primary-900 dark:text-primary-100 font-mono bg-primary-50 dark:bg-primary-700/50 px-2 py-1 rounded"
+                            on:click={() => coypClipboar('Contraseña', selectedAccount?.password || '')}
+                        >
+                            {#if showPassowrd}
+                                {selectedAccount?.password}
+                            {:else}
+                                •••••••••••••••••••••••
+                            {/if}
+                        </button>
+
+                        <button 
+                            type="button" 
+                            class="text-primary-500 hover:scale-110 transition-all duration-200 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
+                            title="Mostrar contraseña"
+                            aria-label="Mostrar contraseña"
+                            on:click={() => showPassowrd = !showPassowrd}
+                        >
+                            <ShowIcon />
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Enlaces -->
+                <div>
+                    <h3 class="text-sm font-medium text-primary-500 dark:text-primary-400 mb-2">Enlaces</h3>
+
+                    {#if selectedAccount.navly && selectedAccount.navly.length > 0}
+                        <div class="flex flex-wrap gap-2">
+                            {#each selectedAccount.navly as link}
+                                <a 
+                                    href={link.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center px-3 py-1.5 bg-primary-100 hover:bg-primary-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    {getDomain(link.url)}
+                                </a>
+                            {/each}
+                        </div>
+                    {:else}
+                        <p class="text-sm text-primary-500 dark:text-primary-400">No hay enlaces disponibles</p>
+                    {/if}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-primary-200 dark:border-gray-700">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500 dark:text-primary-400 block">Creado</span>
+                        <span class="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedAccount.createdAt)}</span>
+                    </div>
+
+                    <div>
+                        <span class="text-sm font-medium text-gray-500 dark:text-primary-400 block">Actualizado</span>
+                        <span class="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedAccount.updatedAt)}</span>
+                    </div>
+                </div>
             </div>
-            <div>
-                <span class="text-sm font-medium text-gray-500 dark:text-primary-400 block">Actualizado</span>
-                <span class="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedAccount.updatedAt)}</span>
-            </div>
-        </div>
-    </div>
-    {/if}
+        {/if}
     </div>
 {/if}
