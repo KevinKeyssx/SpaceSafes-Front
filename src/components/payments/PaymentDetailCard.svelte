@@ -50,7 +50,7 @@
     }
 </script>
 
-<card
+<div
     transition:fade={{ duration: 300 }}
     class="relative animate-slide-up overflow-hidden p-3 rounded-md shadow-sm border transition-all cursor-pointer bg-white dark:bg-primary-700 border-primary-200 dark:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-600 z-10"
 >
@@ -104,4 +104,4 @@
             </div>
         </Dialog>
     </div>
-</card>
+</div>

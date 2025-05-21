@@ -665,11 +665,14 @@
                     <SpaceLoader />
                 </div>
             {:else}
+
+            <div class="flex-grow overflow-y-auto space-y-3 px-2 py-1">
                 {#each filteredRealizadosDetails as paymentDetail (paymentDetail.id)}
                     <PaymentDetailCard {paymentDetail} />
                 {:else}
                     <p class="text-center text-primary-500 dark:text-primary-400 py-4">No hay pagos registrados o que coincidan con tu búsqueda.</p>
                 {/each}
+            </div>
             {/if}
         </section>
     </div>
