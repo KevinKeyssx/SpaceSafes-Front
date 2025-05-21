@@ -19,5 +19,5 @@ export type Navly = {
 
 export type AccountNavly = {
     account: Account;
-    navly: Link;
+    navly: Link | null;
 }
