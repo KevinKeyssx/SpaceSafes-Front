@@ -1,6 +1,6 @@
 # SpaceSafes: Tu Espacio Seguro Digital
 
-![SpaceSafes Logo](public/favicon.svg)
+![SpaceSafes Logo](public/logo.png)
 
 ## Acerca del Proyecto
 
