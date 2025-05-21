@@ -75,7 +75,11 @@
         }
 
         addAccount( savedAccount.account );
-        addLink( savedAccount.navly );
+
+        if ( savedAccount.navly ) {
+            addLink( savedAccount.navly );
+        }
+
         open = false;
         isLoadingSave = false;
         toast.success( 'Cuenta registrada correctamente.', successToast() );
@@ -87,7 +91,7 @@
 
         isLoadingSave = true;
 
-        const  {
+        let {
             createdAt,
             updatedAt,
             id,
@@ -95,10 +99,19 @@
             ...rest
         } = accountEdit;
 
+        let restAccount = rest as object;
+
+        if (accountEdit.navly[0].url) {
+            restAccount = {
+                ...rest,
+                url: accountEdit.navly[0].url!
+            }
+        }
+
         const savedAccount = await loadSpaceSafes<Account>({
             url: `/api/space-safes/accounts/${accountEdit.id}`,
             method: 'PATCH',
-            data: rest
+            data: accountEdit.navly[0].url ? restAccount : rest
         });
 
         console.log('🚀 ~ file: AccountForm.svelte:80 ~ savedAccount:', savedAccount)
