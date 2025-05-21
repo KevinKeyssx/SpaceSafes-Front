@@ -85,9 +85,9 @@ Queremos que registrar tus pagos sea lo más sencillo posible, por eso SpaceSafe
 
 ## Futuras funcionalidades
 
-- Adminitrador de notas
-- Adminitrador de servicios, podrías agregar más tipos de servicios de pago
-- Adminitrador de notas de voz.
+- Administrador de notas
+- Administrador de servicios, podrías agregar más tipos de servicios de pago
+- Administrador de notas de voz.
 - Agregar tipos de pagos trimestrales, semestrales y anuales.
 - Optimizar y mejorar la experiencia de usuario.
 
