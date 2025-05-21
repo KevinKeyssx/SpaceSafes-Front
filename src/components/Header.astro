@@ -133,6 +133,7 @@ const token         = Astro.locals.authToken;
                         href={item.href} 
                         data-astro-prefetch
                         data-astro-transition="slide"
+
                         class={`flex items-center px-4 py-3 rounded-xl transition-all duration-300 ${
                             currentPath.startsWith(item.href)
                             ? 'bg-primary-100 dark:bg-primary-700/50 text-primary-700 dark:text-primary-200 shadow-md'
@@ -152,92 +153,88 @@ const token         = Astro.locals.authToken;
     </div>
 </div>
 
-<script is:inline>
-    // Función para inicializar el menú móvil
-    function initMobileMenu() {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-        
-        // Manejo del menú móvil
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const closeMenuButton = document.getElementById('close-mobile-menu');
-        const mobileMenu = document.getElementById('mobile-menu');
+<script>
+    // Aplicar tema oscuro inmediatamente
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+
+    // Función simple para configurar el menú
+    function setupMenu() {
+        // Obtener referencias a los elementos
+        const menuButton = document.getElementById('mobile-menu-button');
+        const closeButton = document.getElementById('close-mobile-menu');
+        const menu = document.getElementById('mobile-menu');
         const menuIcon = document.getElementById('menu-icon');
-        const menuBackdrop = document.getElementById('mobile-menu-backdrop');
+        const backdrop = document.getElementById('mobile-menu-backdrop');
         
-        // Si no encontramos los elementos, salimos
-        if (!mobileMenuButton || !mobileMenu) return;
+        // Verificar que los elementos existen
+        if (!menuButton || !menu) return;
         
-        // Limpiamos eventos anteriores para evitar duplicados
-        const newMobileMenuButton = mobileMenuButton.cloneNode(true);
-        const newCloseMenuButton = closeMenuButton?.cloneNode(true);
-        const newMenuBackdrop = menuBackdrop?.cloneNode(true);
-        
-        if (mobileMenuButton.parentNode) {
-            mobileMenuButton.parentNode.replaceChild(newMobileMenuButton, mobileMenuButton);
-        }
-        
-        if (closeMenuButton && closeMenuButton.parentNode) {
-            closeMenuButton.parentNode.replaceChild(newCloseMenuButton, closeMenuButton);
-        }
-        
-        if (menuBackdrop && menuBackdrop.parentNode) {
-            menuBackdrop.parentNode.replaceChild(newMenuBackdrop, menuBackdrop);
-        }
-        
-        // Función para abrir el menú
-        function openMobileMenu() {
-            document.body.style.overflow = 'hidden'; // Evitar scroll en el body
-            mobileMenu.classList.remove('translate-x-full');
-            mobileMenu.classList.add('translate-x-0');
-            menuIcon?.classList.add('rotate-90');
-            newMobileMenuButton.setAttribute('aria-expanded', 'true');
-        }
-        
-        // Función para cerrar el menú
-        function closeMobileMenu() {
-            document.body.style.overflow = ''; // Restaurar scroll
-            mobileMenu.classList.remove('translate-x-0');
-            mobileMenu.classList.add('translate-x-full');
-            menuIcon?.classList.remove('rotate-90');
-            newMobileMenuButton.setAttribute('aria-expanded', 'false');
-        }
-        
-        // Eventos para abrir/cerrar el menú
-        newMobileMenuButton.addEventListener('click', openMobileMenu);
-        
-        if (newCloseMenuButton) {
-            newCloseMenuButton.addEventListener('click', closeMobileMenu);
-        }
-        
-        if (newMenuBackdrop) {
-            newMenuBackdrop.addEventListener('click', closeMobileMenu);
-        }
-        
-        // Cerrar menú al hacer clic en un enlace
-        const menuLinks = mobileMenu.querySelectorAll('a');
-        menuLinks.forEach(link => {
-            // Clonar y reemplazar para evitar duplicados
-            const newLink = link.cloneNode(true);
-            link.parentNode.replaceChild(newLink, link);
-            newLink.addEventListener('click', closeMobileMenu);
+        // Abrir menú
+        menuButton.addEventListener('click', function() {
+            menu.classList.remove('translate-x-full');
+            menu.classList.add('translate-x-0');
+            document.body.style.overflow = 'hidden';
+            if (menuIcon) menuIcon.classList.add('rotate-90');
+            menuButton.setAttribute('aria-expanded', 'true');
+            console.log('Menú abierto');
         });
         
-        // Cerrar menú con la tecla Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !mobileMenu.classList.contains('translate-x-full')) {
-                closeMobileMenu();
+        // Cerrar menú
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                menu.classList.remove('translate-x-0');
+                menu.classList.add('translate-x-full');
+                document.body.style.overflow = '';
+                if (menuIcon) menuIcon.classList.remove('rotate-90');
+                menuButton.setAttribute('aria-expanded', 'false');
+                console.log('Menú cerrado');
+            });
+        }
+        
+        // Cerrar menú al hacer clic en el backdrop
+        if (backdrop) {
+            backdrop.addEventListener('click', function() {
+                menu.classList.remove('translate-x-0');
+                menu.classList.add('translate-x-full');
+                document.body.style.overflow = '';
+                if (menuIcon) menuIcon.classList.remove('rotate-90');
+                menuButton.setAttribute('aria-expanded', 'false');
+            });
+        }
+        
+        // Cerrar menú al hacer clic en enlaces
+        const links = menu.querySelectorAll('a');
+        links.forEach(function(link) {
+            link.addEventListener('click', function() {
+                menu.classList.remove('translate-x-0');
+                menu.classList.add('translate-x-full');
+                document.body.style.overflow = '';
+                if (menuIcon) menuIcon.classList.remove('rotate-90');
+                menuButton.setAttribute('aria-expanded', 'false');
+            });
+        });
+        
+        // Cerrar menú con Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !menu.classList.contains('translate-x-full')) {
+                menu.classList.remove('translate-x-0');
+                menu.classList.add('translate-x-full');
+                document.body.style.overflow = '';
+                if (menuIcon) menuIcon.classList.remove('rotate-90');
+                menuButton.setAttribute('aria-expanded', 'false');
             }
         });
     }
 
-    // Inicializar en carga inicial
-    document.addEventListener('DOMContentLoaded', initMobileMenu);
+    // Configurar el menú cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', setupMenu);
     
-    // Inicializar después de cada navegación con Astro
-    document.addEventListener('astro:page-load', initMobileMenu);
-    document.addEventListener('astro:after-swap', initMobileMenu);
+    // Configurar el menú después de la navegación con Astro
+    document.addEventListener('astro:page-load', setupMenu);
+</script>
 
+<script is:inline>
     // Redefinir la función toggleTheme por si acaso
     window.toggleTheme = function() {
         document.documentElement.classList.add('dark');
