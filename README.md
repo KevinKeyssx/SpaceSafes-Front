@@ -71,6 +71,27 @@ Para crear un pago, debes:
 
 ![Crear Pago](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796430/space-safes/demo/payment/Create_payments_f0i2hl.gif)
 
+
+## SpaceSafes en acción
+
+Queremos que registrar tus pagos sea lo más sencillo posible, por eso SpaceSafes te permite registrar tus pagos de manera rápida y cómoda.
+
+- Puedes ver tus pagos como un historial moviendote de fecha así puedes ver tus pagos en el tiempo en el que se hicieron.
+- Cada pado descuenta de tu saldo de tu balance por eso es muy importante que todos tus pagos los vayas registrando.
+- Recuerda crear tus servicios de pago para que puedas registrar tus pagos de forma rápida y cómoda.
+
+
+## Futuras funcionalidades
+
+- Adminitrador de notas
+- Adminitrador de servicios, podrías agregar más tipos de servicios de pago
+- Adminitrador de notas de voz.
+- Agregar tipos de pagos trimestrales, semestrales y anuales.
+- Optimizar y mejorar la experiencia de usuario.
+
+![Historial de pagos](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796985/space-safes/demo/payment/historial_de_pagos_kxrlep.gif)
+
+
 ## Tecnologías Utilizadas
 
 ### Frontend
