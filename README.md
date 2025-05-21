@@ -46,7 +46,8 @@ Para crear un enlace, debes:
 4. Llenar los campos requeridos
 5. Darle click al botón "Guardar"
 
-![Crear Enlace](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747795674/space-safes/demo/navly/Create_navly_oipq4n.gif)
+Ver imagen
+[Crear Enlace](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747795674/space-safes/demo/navly/Create_navly_oipq4n.gif)
 
 ## Crear un servicio de pago en SpaceSafes
 
@@ -69,7 +70,8 @@ Para crear un pago, debes:
 4. Puedes seleccionar varios servicios de pago e ir cambiando de balances como desees
 5. Darle click al botón "Realizar Pago"
 
-![Crear Pago](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796430/space-safes/demo/payment/Create_payments_f0i2hl.gif)
+Ver imagen
+[Crear Pago](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796430/space-safes/demo/payment/Create_payments_f0i2hl.gif)
 
 
 ## SpaceSafes en acción
@@ -89,7 +91,7 @@ Queremos que registrar tus pagos sea lo más sencillo posible, por eso SpaceSafe
 - Agregar tipos de pagos trimestrales, semestrales y anuales.
 - Optimizar y mejorar la experiencia de usuario.
 
-![Historial de pagos](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796985/space-safes/demo/payment/historial_de_pagos_kxrlep.gif)
+Ver imagen
 [Historial de pagos](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796985/space-safes/demo/payment/historial_de_pagos_kxrlep.gif)
 
 ## Tecnologías Utilizadas
