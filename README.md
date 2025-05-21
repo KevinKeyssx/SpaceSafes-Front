@@ -90,7 +90,7 @@ Queremos que registrar tus pagos sea lo más sencillo posible, por eso SpaceSafe
 - Optimizar y mejorar la experiencia de usuario.
 
 ![Historial de pagos](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796985/space-safes/demo/payment/historial_de_pagos_kxrlep.gif)
-
+[Historial de pagos](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796985/space-safes/demo/payment/historial_de_pagos_kxrlep.gif)
 
 ## Tecnologías Utilizadas
 
