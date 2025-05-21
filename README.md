@@ -14,6 +14,63 @@ En un mundo digital donde manejamos decenas de cuentas, contraseñas y datos per
 - **Experiencia fluida**: Interfaz moderna e intuitiva que funciona en cualquier dispositivo
 - **Privacidad por diseño**: Tu información nunca se comparte con terceros
 
+
+## Crear una cuenta en SpaceSafes
+
+Para crear una cuenta, debes:
+1. Iniciar sesión con Clerk
+2. Dirigete a la página cuentas de SpaceSafes
+3. Darle click al botón "Crear Cuenta"
+4. Llenar los campos requeridos
+5. Darle click al botón "Guardar"
+
+![Crear Cuenta](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747793827/space-safes/demo/account/Create_account_uhjdir.gif)
+
+## Crear un balance en SpaceSafes
+
+Para crear un balance, debes:
+1. Iniciar sesión con Clerk
+2. Dirigete a la página balances de SpaceSafes
+3. Darle click al botón "Crear Balance"
+4. Llenar los campos requeridos
+5. Darle click al botón "Guardar"
+
+![Crear Balance](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747793993/space-safes/demo/balance/Create_account_nihhxi.gif)
+
+## Crear un enlace en SpaceSafes
+
+Para crear un enlace, debes:
+1. Iniciar sesión con Clerk
+2. Dirigete a la página enlaces de SpaceSafes
+3. Darle click al botón "Crear Enlace"
+4. Llenar los campos requeridos
+5. Darle click al botón "Guardar"
+
+![Crear Enlace](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747795674/space-safes/demo/navly/Create_navly_oipq4n.gif)
+
+## Crear un servicio de pago en SpaceSafes
+
+Para crear un servicio de pago, debes:
+1. Iniciar sesión con Clerk
+2. Dirigete a la página servicios de SpaceSafes
+3. Seleccionar un servicio
+4. Seleccionar un enlace (opcional)
+5. Darle click al botón "Agregar"
+
+![Crear Servicio de Pago](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796076/space-safes/demo/services/Create_service_ligfjy.gif)
+
+
+## Crear pagos en SpaceSafes
+
+Para crear un pago, debes:
+1. Iniciar sesión con Clerk
+2. Dirigete a la página pagos de SpaceSafes
+3. Debes seleccionar el medio de pago de los balances disponibles
+4. Puedes seleccionar varios servicios de pago e ir cambiando de balances como desees
+5. Darle click al botón "Realizar Pago"
+
+![Crear Pago](https://res.cloudinary.com/dbgzsikcs/image/upload/v1747796430/space-safes/demo/payment/Create_payments_f0i2hl.gif)
+
 ## Tecnologías Utilizadas
 
 ### Frontend
